@@ -30,6 +30,11 @@
     - [x] Tamamlama kilidi ve tek-seferlik callback döngüsünü RED/GREEN doğrula
     - [x] Odaklı/tam testleri, analyzer ve diff kontrolünü çalıştır
     - [x] Task 3 raporunu yaz ve değişiklikleri commit et
+  - [x] Task 3 inceleme düzeltmelerini tamamla
+    - [x] Bağlı uçtan ileri uzatmayı reddeden ve geri izlemeyi koruyan RED/GREEN regresyonu ekle
+    - [x] Aktif hareket sırasında ikinci başlangıcı reddeden ve özgün hareketi temizleyen RED/GREEN regresyonu ekle
+    - [x] Odaklı/tam testleri, analyzer ve diff kontrolünü çalıştır
+    - [x] Düzeltme kanıtını rapora ekle ve commit et
 - [ ] Analiz, test ve Android derleme doğrulamalarını çalıştır
 - [ ] Sonuçları ve kapsam kontrolünü bu dosyanın inceleme bölümüne kaydet
 
@@ -40,3 +45,4 @@
 - Task 2: Seviye 1 yatay satırlar, seviye 2 dikey sütunlar, seviye 3 ise üst satır ve iki serpantin yol ile çözülebilir.
 - Task 2 inceleme düzeltmeleri: 14 odaklı test geçti; `size < 2`, eşzamanlı ilk yükleme ve hata sonrası yeniden deneme davranışları doğrulandı.
 - Task 3: 16 odaklı domain testi ve 31 testlik tam paket geçti; `flutter analyze` sıfır sorunla tamamlandı.
+- Task 3 inceleme düzeltmeleri: 18 odaklı domain testi ve 33 testlik tam paket geçti; bağlı uç terminal davranışı ve aktif hareket yeniden girişi doğrulandı.

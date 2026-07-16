@@ -82,6 +82,32 @@ void main() {
       expect(session.snapshot.paths['red']!.connected, isTrue);
     });
 
+    test('rejects forward extension after reaching the matching endpoint', () {
+      var completionCount = 0;
+      final session = PuzzleSession(
+        level: _level,
+        onCompleted: () => completionCount++,
+      );
+      session.startPath(const GridPosition(0, 0));
+      session.extendPath(const GridPosition(1, 0));
+      session.extendPath(const GridPosition(2, 0));
+
+      expect(session.extendPath(const GridPosition(2, 1)), isFalse);
+      expect(
+        session.snapshot.paths['red']!.cells.last,
+        const GridPosition(2, 0),
+      );
+      expect(session.snapshot.paths['red']!.connected, isTrue);
+      expect(completionCount, 0);
+
+      expect(session.extendPath(const GridPosition(1, 0)), isTrue);
+      expect(session.snapshot.paths['red']!.connected, isFalse);
+      session.endPath();
+      _connectBlue(session);
+      expect(session.isComplete, isFalse);
+      expect(completionCount, 0);
+    });
+
     test('snapshots are defensive unmodifiable copies', () {
       final session = PuzzleSession(level: _level);
       session.startPath(const GridPosition(0, 0));
@@ -103,6 +129,24 @@ void main() {
   });
 
   group('PuzzleSession editing', () {
+    test('rejects a second start while a gesture is active', () {
+      final session = PuzzleSession(level: _level);
+      session.startPath(const GridPosition(0, 0));
+      session.extendPath(const GridPosition(1, 0));
+
+      expect(session.startPath(const GridPosition(0, 2)), isFalse);
+      expect(session.snapshot.paths.keys, const ['red']);
+      expect(session.snapshot.paths['red']!.cells, const [
+        GridPosition(0, 0),
+        GridPosition(1, 0),
+      ]);
+
+      session.endPath();
+      expect(session.snapshot.paths, isEmpty);
+      expect(session.startPath(const GridPosition(0, 0)), isTrue);
+      expect(session.extendPath(const GridPosition(1, 0)), isTrue);
+    });
+
     test('immediately backtracks by one cell', () {
       final session = PuzzleSession(level: _level);
       session.startPath(const GridPosition(0, 0));

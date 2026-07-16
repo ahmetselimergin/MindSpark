@@ -49,7 +49,7 @@ final class PuzzleSession {
       _paths.values.every((path) => path.connected);
 
   bool startPath(GridPosition position) {
-    if (_inputLocked || !_isInBounds(position)) {
+    if (_inputLocked || _activeColor != null || !_isInBounds(position)) {
       return false;
     }
     final color = _endpointColors[position];
@@ -79,6 +79,9 @@ final class PuzzleSession {
       path.cells.removeLast();
       path.connected = false;
       return true;
+    }
+    if (path.connected) {
+      return false;
     }
     if (_isOccupied(position)) {
       return false;
