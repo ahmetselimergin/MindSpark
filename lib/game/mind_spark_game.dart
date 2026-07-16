@@ -150,34 +150,42 @@ final class MindSparkGame extends FlameGame with DragCallbacks {
   Iterable<GridPosition> _orthogonalTraversal(
     GridPosition start,
     GridPosition target,
-  ) sync* {
-    var current = start;
+  ) {
+    final startIsCanonical =
+        start.x < target.x || (start.x == target.x && start.y <= target.y);
+    final canonicalStart = startIsCanonical ? start : target;
+    final canonicalTarget = startIsCanonical ? target : start;
+    var current = canonicalStart;
+    final route = <GridPosition>[current];
     final horizontalFirst =
-        (target.x - start.x).abs() >= (target.y - start.y).abs();
+        (canonicalTarget.x - canonicalStart.x).abs() >=
+        (canonicalTarget.y - canonicalStart.y).abs();
 
     if (horizontalFirst) {
-      while (current.x != target.x) {
+      while (current.x != canonicalTarget.x) {
         current = GridPosition(
-          current.x + (target.x > current.x ? 1 : -1),
+          current.x + (canonicalTarget.x > current.x ? 1 : -1),
           current.y,
         );
-        yield current;
+        route.add(current);
       }
     }
-    while (current.y != target.y) {
+    while (current.y != canonicalTarget.y) {
       current = GridPosition(
         current.x,
-        current.y + (target.y > current.y ? 1 : -1),
+        current.y + (canonicalTarget.y > current.y ? 1 : -1),
       );
-      yield current;
+      route.add(current);
     }
-    while (current.x != target.x) {
+    while (current.x != canonicalTarget.x) {
       current = GridPosition(
-        current.x + (target.x > current.x ? 1 : -1),
+        current.x + (canonicalTarget.x > current.x ? 1 : -1),
         current.y,
       );
-      yield current;
+      route.add(current);
     }
+
+    return (startIsCanonical ? route : route.reversed).skip(1);
   }
 
   void _drawGrid(Canvas canvas, Rect board) {

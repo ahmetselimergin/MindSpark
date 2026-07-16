@@ -56,6 +56,12 @@
     - [x] Restart ve tek-seferlik tamamlama callback döngüsünü doğrula
     - [x] Odaklı/tam testleri, analyzer ve diff kontrolünü çalıştır
     - [x] Task 5 raporunu yaz ve değişiklikleri commit et
+  - [x] Task 5 inceleme düzeltmelerini tamamla
+    - [x] Ters yönlü yatay/dikey baskın, negatif/eşit ve tam geri izleme regresyonlarını public pointer seam'leri üzerinden RED doğrula
+    - [x] Kanonik uç sıralamasından tek rota üretip ters yönde tam tersini döndüren minimal düzeltmeyi uygula
+    - [x] Flame olay kurulumunun gerçek API uygunluğunu incele; mümkünse pointer-ID yaşam döngüsünü üretim callback'leriyle test et
+    - [x] Odaklı/tam testleri, analyzer ve diff kontrolünü çalıştır
+    - [x] Task 5 rapor kronolojisini git/test kanıtına göre düzelt, sonuçları kaydet ve commit et
 - [ ] Analiz, test ve Android derleme doğrulamalarını çalıştır
 - [ ] Sonuçları ve kapsam kontrolünü bu dosyanın inceleme bölümüne kaydet
 
@@ -69,4 +75,5 @@
 - Task 3 inceleme düzeltmeleri: 18 odaklı domain testi ve 33 testlik tam paket geçti; bağlı uç terminal davranışı ve aktif hareket yeniden girişi doğrulandı.
 - Task 4: 14 odaklı ilerleme/kalıcılık testi ve 47 testlik tam paket geçti; `flutter analyze` sıfır sorunla tamamlandı.
 - Task 4 inceleme düzeltmeleri: 20 odaklı ilerleme/kalıcılık testi ve 53 testlik tam paket geçti; sıralı mutasyonlar, değişmez model sahipliği, önceki değerli hata durumu, şema sabitleme ve güvenli Hive temizliği doğrulandı.
-- Task 5: 11 odaklı Flame adaptör testi ve 64 testlik tam paket geçti; koordinat/resize eşlemesi, hızlı ortogonal sürükleme, yeniden giriş güvenliği, restart callback döngüsü ve canvas render doğrulandı.
+- Task 5 commit durumu: `91166b4` 11 odaklı Flame adaptör testini birlikte ekledi; 53 testlik ebeveyn durumundan 64 testlik tam pakete çıktı. Ayrı bir 10-test commit'i yoktur; önceki rapordaki pre-regresyon `+11` kronolojisi hatalıydı.
+- Task 5 inceleme düzeltmeleri: 16 odaklı Flame adaptör testi ve 69 testlik tam paket geçti; iki yönlü kanonik ortogonal rota, tam hızlı geri izleme ve gerçek Flame olaylarıyla pointer-ID yaşam döngüsü doğrulandı. `flutter analyze` ve `git diff --check` sıfır sorunla tamamlandı.
