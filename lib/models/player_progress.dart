@@ -1,5 +1,25 @@
 final class PlayerProgress {
-  const PlayerProgress({
+  factory PlayerProgress({
+    required int schemaVersion,
+    required int highestUnlockedLevel,
+    required Set<int> completedLevelIds,
+    required int totalScore,
+    required int lives,
+    required bool soundEnabled,
+    required bool vibrationEnabled,
+  }) {
+    return PlayerProgress._(
+      schemaVersion: _schemaVersion(schemaVersion),
+      highestUnlockedLevel: highestUnlockedLevel,
+      completedLevelIds: Set<int>.unmodifiable(completedLevelIds),
+      totalScore: totalScore,
+      lives: lives,
+      soundEnabled: soundEnabled,
+      vibrationEnabled: vibrationEnabled,
+    );
+  }
+
+  const PlayerProgress._({
     required this.schemaVersion,
     required this.highestUnlockedLevel,
     required this.completedLevelIds,
@@ -10,13 +30,15 @@ final class PlayerProgress {
   });
 
   const PlayerProgress.initial()
-    : schemaVersion = 1,
-      highestUnlockedLevel = 1,
-      completedLevelIds = const <int>{},
-      totalScore = 0,
-      lives = 3,
-      soundEnabled = true,
-      vibrationEnabled = true;
+    : this._(
+        schemaVersion: 1,
+        highestUnlockedLevel: 1,
+        completedLevelIds: const <int>{},
+        totalScore: 0,
+        lives: 3,
+        soundEnabled: true,
+        vibrationEnabled: true,
+      );
 
   factory PlayerProgress.fromMap(Map<Object?, Object?> map) {
     final completedLevelIds = <int>{};
@@ -28,7 +50,7 @@ final class PlayerProgress {
     }
 
     return PlayerProgress(
-      schemaVersion: _positiveInt(map['schemaVersion'], fallback: 1),
+      schemaVersion: _schemaVersion(map['schemaVersion']),
       highestUnlockedLevel: _positiveInt(
         map['highestUnlockedLevel'],
         fallback: 1,
@@ -123,6 +145,10 @@ final class PlayerProgress {
 
 int _positiveInt(Object? value, {required int fallback}) {
   return value is int && value > 0 ? value : fallback;
+}
+
+int _schemaVersion(Object? value) {
+  return value is int && value == 1 ? value : 1;
 }
 
 int _nonNegativeInt(Object? value, {required int fallback}) {

@@ -16,7 +16,7 @@ void main() {
     });
 
     test('round-trips through a map', () {
-      const progress = PlayerProgress(
+      final progress = PlayerProgress(
         schemaVersion: 1,
         highestUnlockedLevel: 4,
         completedLevelIds: {1, 3},
@@ -42,7 +42,7 @@ void main() {
 
       expect(
         progress,
-        const PlayerProgress(
+        PlayerProgress(
           schemaVersion: 1,
           highestUnlockedLevel: 1,
           completedLevelIds: {1, 4},
@@ -57,6 +57,86 @@ void main() {
         PlayerProgress.fromMap({'completedLevelIds': 'not-a-list'}),
         const PlayerProgress.initial(),
       );
+    });
+
+    test('normalizes every unsupported schema version to version one', () {
+      for (final unsupported in <Object?>[
+        2,
+        99,
+        0,
+        -1,
+        true,
+        false,
+        1.0,
+        '1',
+      ]) {
+        expect(
+          PlayerProgress.fromMap({'schemaVersion': unsupported}).schemaVersion,
+          1,
+          reason: 'schemaVersion: $unsupported',
+        );
+      }
+
+      expect(
+        PlayerProgress(
+          schemaVersion: 2,
+          highestUnlockedLevel: 1,
+          completedLevelIds: const {},
+          totalScore: 0,
+          lives: 3,
+          soundEnabled: true,
+          vibrationEnabled: true,
+        ).schemaVersion,
+        1,
+      );
+    });
+
+    test('boolean values are not accepted by integer field helpers', () {
+      final progress = PlayerProgress.fromMap({
+        'schemaVersion': true,
+        'highestUnlockedLevel': true,
+        'totalScore': false,
+        'lives': true,
+      });
+
+      expect(progress, const PlayerProgress.initial());
+    });
+
+    test('owns completed level IDs supplied by callers', () {
+      final callerOwnedIds = <int>{1};
+      final progress = PlayerProgress(
+        schemaVersion: 1,
+        highestUnlockedLevel: 2,
+        completedLevelIds: callerOwnedIds,
+        totalScore: 100,
+        lives: 3,
+        soundEnabled: true,
+        vibrationEnabled: true,
+      );
+      final equivalent = PlayerProgress(
+        schemaVersion: 1,
+        highestUnlockedLevel: 2,
+        completedLevelIds: {1},
+        totalScore: 100,
+        lives: 3,
+        soundEnabled: true,
+        vibrationEnabled: true,
+      );
+      final originalHashCode = progress.hashCode;
+
+      callerOwnedIds
+        ..clear()
+        ..add(2);
+
+      expect(progress.completedLevelIds, {1});
+      expect(progress, equivalent);
+      expect(progress.hashCode, originalHashCode);
+      expect(
+        progress.completeLevel(levelId: 1).totalScore,
+        100,
+        reason: 'caller mutation must not make a completed level award again',
+      );
+      expect(() => progress.completedLevelIds.add(3), throwsUnsupportedError);
     });
 
     test('completion awards once and only explicitly unlocks forward', () {
@@ -91,7 +171,7 @@ void main() {
     });
 
     test('invalid completion IDs cannot regress or corrupt progress', () {
-      const progress = PlayerProgress(
+      final progress = PlayerProgress(
         schemaVersion: 1,
         highestUnlockedLevel: 4,
         completedLevelIds: {1},
