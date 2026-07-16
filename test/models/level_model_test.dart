@@ -36,6 +36,20 @@ void main() {
       );
     });
 
+    test('rejects a grid smaller than 2x2', () {
+      expect(
+        () => LevelModel.fromJson({
+          'id': 1,
+          'size': 1,
+          'points': [
+            {'x': 0, 'y': 0, 'color': 'red'},
+            {'x': 0, 'y': 0, 'color': 'red'},
+          ],
+        }),
+        throwsA(_formatErrorContaining('size')),
+      );
+    });
+
     test('rejects duplicate point coordinates', () {
       expect(
         () => LevelModel.fromJson({

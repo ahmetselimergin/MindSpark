@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
@@ -29,6 +30,49 @@ void main() {
       );
       expect((await repository.levelById(2)).id, 2);
       expect(bundle.loadCount, 1);
+    });
+
+    test(
+      'coalesces concurrent first loads into one immutable result',
+      () async {
+        final bundle = TestAssetBundle(
+          jsonEncode([_levelJson(2), _levelJson(1)]),
+          blocked: true,
+        );
+        final repository = AssetLevelRepository(
+          bundle: bundle,
+          assetPath: 'levels.json',
+        );
+
+      final firstLoad = repository.loadLevels();
+      final secondLoad = repository.loadLevels();
+      bundle.release();
+
+        final results = await Future.wait([firstLoad, secondLoad]);
+
+        expect(bundle.loadCount, 1);
+        expect(identical(results.first, results.last), isTrue);
+        expect(results.first.map((level) => level.id), [1, 2]);
+      },
+    );
+
+    test('retries after a failed load', () async {
+      final bundle = TestAssetBundle('{not-json');
+      final repository = AssetLevelRepository(
+        bundle: bundle,
+        assetPath: 'levels.json',
+      );
+
+      await expectLater(
+        repository.loadLevels(),
+        throwsA(isA<LevelLoadException>()),
+      );
+      bundle.contents = jsonEncode([_levelJson(1)]);
+
+      final levels = await repository.loadLevels();
+
+      expect(levels.single.id, 1);
+      expect(bundle.loadCount, 2);
     });
 
     test('rejects duplicate level IDs', () async {
@@ -107,14 +151,24 @@ Matcher _loadErrorContaining(String text) {
 }
 
 final class TestAssetBundle extends CachingAssetBundle {
-  TestAssetBundle(this.contents);
+  TestAssetBundle(this.contents, {bool blocked = false})
+    : _loadGate = blocked ? Completer<void>() : null;
 
-  final String contents;
+  String contents;
+  final Completer<void>? _loadGate;
   int loadCount = 0;
+
+  void release() => _loadGate?.complete();
+
+  @override
+  Future<String> loadString(String key, {bool cache = true}) async {
+    loadCount++;
+    await _loadGate?.future;
+    return contents;
+  }
 
   @override
   Future<ByteData> load(String key) async {
-    loadCount++;
     final bytes = Uint8List.fromList(utf8.encode(contents));
     return ByteData.sublistView(bytes);
   }

@@ -17,7 +17,13 @@
   - [x] Task 2 repository testlerini RED/GREEN tamamla
   - [x] Üç çözülebilir 5×5 seviyeyi bundle'a ekle
   - [x] Task 2 odaklı testleri ve analyzer'ı doğrula
-  - [x] Task 2 raporunu yaz ve commit et
+  - [x] Task 2 uygulama ve test kanıtlarını commit et
+  - [x] Task 2 inceleme düzeltmelerini tamamla
+    - [x] `size < 2` sınırını RED/GREEN doğrula
+    - [x] Eşzamanlı ilk yüklemeleri tek future üzerinde RED/GREEN birleştir
+    - [x] Başarısız yüklemeden sonra yeniden denemeyi doğrula
+    - [x] Odaklı test, analyzer ve diff kontrollerini çalıştır
+    - [x] Düzeltmeleri commit et ve inceleme sonucunu kaydet
 - [ ] Analiz, test ve Android derleme doğrulamalarını çalıştır
 - [ ] Sonuçları ve kapsam kontrolünü bu dosyanın inceleme bölümüne kaydet
 
@@ -26,3 +32,4 @@
 - Tasarım aşaması devam ediyor.
 - Task 2: 11 odaklı test geçti; `flutter analyze` sıfır sorunla tamamlandı.
 - Task 2: Seviye 1 yatay satırlar, seviye 2 dikey sütunlar, seviye 3 ise üst satır ve iki serpantin yol ile çözülebilir.
+- Task 2 inceleme düzeltmeleri: 14 odaklı test geçti; `size < 2`, eşzamanlı ilk yükleme ve hata sonrası yeniden deneme davranışları doğrulandı.

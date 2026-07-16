@@ -16,8 +16,8 @@ final class LevelModel {
   factory LevelModel.fromJson(Map<String, Object?> json) {
     final id = _requiredInt(json, 'id');
     final size = _requiredInt(json, 'size');
-    if (size <= 0) {
-      throw const LevelFormatException('size must be positive');
+    if (size < 2) {
+      throw const LevelFormatException('size must be at least 2');
     }
 
     final rawPoints = json['points'];

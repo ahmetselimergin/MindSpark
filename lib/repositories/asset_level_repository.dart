@@ -13,14 +13,19 @@ final class AssetLevelRepository implements LevelRepository {
   final AssetBundle _bundle;
   final String assetPath;
   List<LevelModel>? _cachedLevels;
+  Future<List<LevelModel>>? _inFlightLoad;
 
   @override
-  Future<List<LevelModel>> loadLevels() async {
+  Future<List<LevelModel>> loadLevels() {
     final cachedLevels = _cachedLevels;
     if (cachedLevels != null) {
-      return cachedLevels;
+      return Future.value(cachedLevels);
     }
 
+    return _inFlightLoad ??= _loadLevels();
+  }
+
+  Future<List<LevelModel>> _loadLevels() async {
     try {
       final contents = await _bundle.loadString(assetPath);
       final decoded = jsonDecode(contents);
@@ -61,6 +66,8 @@ final class AssetLevelRepository implements LevelRepository {
         'Failed to load levels from "$assetPath"$detail',
         error,
       );
+    } finally {
+      _inFlightLoad = null;
     }
   }
 
