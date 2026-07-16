@@ -61,6 +61,7 @@ void main() {
         await controller.completeLevel(levelId: 1, nextLevelId: 2);
 
         final failedState = container.read(appProgressControllerProvider);
+        expect(failedState, isA<AsyncError<PlayerProgress>>());
         expect(failedState.hasError, isTrue);
         expect(failedState.hasValue, isTrue);
         expect(repository.saveAttempts, hasLength(1));

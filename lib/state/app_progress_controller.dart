@@ -71,10 +71,7 @@ final class AppProgressController extends AsyncNotifier<PlayerProgress> {
       state = AsyncData(candidate);
     } catch (error, stackTrace) {
       _lastUnsavedProgress = candidate;
-      final failedSave = AsyncError<PlayerProgress>(error, stackTrace);
-      // Riverpod 3 uses this API to retain data alongside an error state.
-      // ignore: invalid_use_of_internal_member
-      state = failedSave.copyWithPrevious(AsyncData(candidate));
+      state = AsyncError(error, stackTrace);
     }
   }
 
