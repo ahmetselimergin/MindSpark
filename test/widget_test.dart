@@ -1,30 +1,118 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:mind_spark/main.dart';
+import 'package:mind_spark/app/app.dart';
+import 'package:mind_spark/models/level_model.dart';
+import 'package:mind_spark/repositories/level_repository.dart';
+import 'package:mind_spark/repositories/progress_repository.dart';
+import 'package:mind_spark/state/app_progress_controller.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('splash waits while initialization is still loading', (
+    tester,
+  ) async {
+    final levels = Completer<List<LevelModel>>();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpWidget(
+      _testApp(
+        levelRepository: _TestLevelRepository(load: () => levels.future),
+      ),
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('MindSpark'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('PLAY'), findsNothing);
   });
+
+  testWidgets('splash explains a level load failure and retries', (
+    tester,
+  ) async {
+    var attempts = 0;
+    final repository = _TestLevelRepository(
+      load: () async {
+        attempts++;
+        if (attempts == 1) {
+          throw const LevelLoadException('Bundled levels are unavailable');
+        }
+        return _levels;
+      },
+    );
+
+    await tester.pumpWidget(_testApp(levelRepository: repository));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Levels could not be loaded.'), findsOneWidget);
+    expect(find.text('RETRY'), findsOneWidget);
+
+    await tester.tap(find.text('RETRY'));
+    await tester.pumpAndSettle();
+
+    expect(attempts, 2);
+    expect(find.text('Level 1'), findsOneWidget);
+  });
+
+  testWidgets('home shows the current level and score', (tester) async {
+    await tester.pumpWidget(
+      _testApp(
+        levelRepository: _TestLevelRepository(load: () async => _levels),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('MindSpark'), findsOneWidget);
+    expect(find.text('Level 1'), findsOneWidget);
+    expect(find.text('Best Score: 0'), findsOneWidget);
+    expect(find.text('PLAY'), findsOneWidget);
+  });
+}
+
+Widget _testApp({
+  required LevelRepository levelRepository,
+  ProgressRepository? progressRepository,
+}) {
+  return ProviderScope(
+    overrides: [
+      levelRepositoryProvider.overrideWithValue(levelRepository),
+      progressRepositoryProvider.overrideWithValue(
+        progressRepository ?? InMemoryProgressRepository(),
+      ),
+    ],
+    child: const MindSparkApp(),
+  );
+}
+
+final _levels = [
+  const LevelModel(
+    id: 1,
+    size: 2,
+    points: [
+      GridPoint(x: 0, y: 0, color: 'blue'),
+      GridPoint(x: 1, y: 1, color: 'blue'),
+    ],
+  ),
+  const LevelModel(
+    id: 5,
+    size: 2,
+    points: [
+      GridPoint(x: 0, y: 1, color: 'yellow'),
+      GridPoint(x: 1, y: 0, color: 'yellow'),
+    ],
+  ),
+];
+
+final class _TestLevelRepository implements LevelRepository {
+  _TestLevelRepository({required this.load});
+
+  final Future<List<LevelModel>> Function() load;
+
+  @override
+  Future<List<LevelModel>> loadLevels() => load();
+
+  @override
+  Future<LevelModel> levelById(int id) async {
+    final levels = await loadLevels();
+    return levels.firstWhere((level) => level.id == id);
+  }
 }

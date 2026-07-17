@@ -89,3 +89,28 @@
 - Task 5 inceleme düzeltmeleri: 16 odaklı Flame adaptör testi ve 69 testlik tam paket geçti; iki yönlü kanonik ortogonal rota, tam hızlı geri izleme ve gerçek Flame olaylarıyla pointer-ID yaşam döngüsü doğrulandı. `flutter analyze` ve `git diff --check` sıfır sorunla tamamlandı.
 - Task 5 kısmi ters izleme düzeltmesi: 18 odaklı Flame adaptör testi ve 71 testlik tam paket geçti; kabul edilen sentetik segment geçmişi, negatif projeksiyonla çoklu kısmi geri izleme ve yön değişiminde yeni segment doğrulandı. `flutter analyze` ve `git diff --check` sıfır sorunla tamamlandı.
 - Task 5 reddedilen ileri segment düzeltmesi: 19 odaklı Flame adaptör testi ve 72 testlik tam paket geçti; yeni segmentin yalnız domain kabulünden sonra kurulması ve reddedilen bağlı-yol hareketinden sonra önceki geri izleme geçmişinin korunması doğrulandı. `flutter analyze` ve `git diff --check` sıfır sorunla tamamlandı.
+
+## Task 6 — Flutter application flow
+
+### Design specification
+
+- Audience/job: Android casual-puzzle players in short sessions; orient quickly and enter the current puzzle with one dominant action.
+- Colors: Midnight Ink `#10152B`, Deep Circuit `#1B2340`, Spark Yellow `#FFD166`, Electric Cyan `#4CC9F0`, Coral Pulse `#FF6B6B`, Frost `#F7F8FF`.
+- Type: system `sans-serif-condensed` heavy for display numerals and titles; system `sans-serif` medium for body and actions.
+- Layout: quiet centered stack, oversized current-level numeral, compact score label, maximum square game board, restrained controls.
+- Signature: one simple reusable three-node connected spark-trail painter on splash, home, and result.
+- Motion: no decorative animation; stable test-safe screens and reduced-motion compatible by construction.
+
+### Implementation checklist
+
+- [x] Write splash/home widget tests and capture RED.
+- [x] Implement bootstrap, provider seams, routes, theme, splash, and home; capture GREEN.
+- [x] Write gameplay/result tests and capture RED.
+- [x] Implement one-game gameplay lifecycle, persistence gating, result order, and safe routes.
+- [x] Run focused widget tests.
+- [x] Run full suite, analyzer, and diff review.
+- [x] Write report and prepare commit.
+
+### Review
+
+- Task 6: 9 focused widget tests and the 80-test full suite passed; `flutter analyze` and `git diff --check` completed cleanly. Splash initialization, explicit retry, one-game gameplay lifetime, once-only completion, retryable save failure, repository-order next-level navigation, final-level Home behavior, and safe invalid-route handling are covered.

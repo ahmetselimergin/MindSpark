@@ -9,6 +9,7 @@ final progressRepositoryProvider = Provider<ProgressRepository>(
 final appProgressControllerProvider =
     AsyncNotifierProvider<AppProgressController, PlayerProgress>(
       AppProgressController.new,
+      retry: (_, _) => null,
     );
 
 final class AppProgressController extends AsyncNotifier<PlayerProgress> {
