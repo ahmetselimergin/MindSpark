@@ -28,6 +28,8 @@ final class MindSparkGame extends FlameGame with DragCallbacks {
   final PuzzleSession _session;
   final Vector2 _canvasSize = Vector2.zero();
   GridPosition? _lastPointerCell;
+  GridPosition? _lastRawPointerCell;
+  _SyntheticSegment? _syntheticSegment;
   int? _activePointerId;
 
   PuzzleSnapshot get snapshot => _session.snapshot;
@@ -79,31 +81,78 @@ final class MindSparkGame extends FlameGame with DragCallbacks {
       return false;
     }
     _lastPointerCell = cell;
+    _lastRawPointerCell = cell;
+    _syntheticSegment = null;
     return true;
   }
 
   void handlePointerUpdate(Vector2 localPosition) {
     final target = cellAtLocalPosition(localPosition);
     final start = _lastPointerCell;
-    if (target == null || start == null || target == start) {
+    final rawStart = _lastRawPointerCell;
+    if (target == null ||
+        start == null ||
+        rawStart == null ||
+        target == rawStart) {
       return;
     }
 
-    for (final cell in _orthogonalTraversal(start, target)) {
-      _session.extendPath(cell);
+    final rawDx = target.x - rawStart.x;
+    final rawDy = target.y - rawStart.y;
+    final segment = _syntheticSegment;
+    if (segment != null && segment.projection(rawDx, rawDy) < 0) {
+      var steps = rawDx.abs() + rawDy.abs();
+      while (steps > 0 && segment.cells.isNotEmpty) {
+        final previous = segment.cells.length == 1
+            ? segment.start
+            : segment.cells[segment.cells.length - 2];
+        if (!_session.extendPath(previous)) {
+          break;
+        }
+        segment.cells.removeLast();
+        _lastPointerCell = previous;
+        steps--;
+      }
+      if (segment.cells.isEmpty) {
+        _syntheticSegment = null;
+      }
+      _lastRawPointerCell = target;
+      return;
     }
-    _lastPointerCell = target;
+
+    final nextSegment = _SyntheticSegment(
+      start: start,
+      rawDx: rawDx,
+      rawDy: rawDy,
+    );
+    _syntheticSegment = nextSegment;
+    for (final cell in _orthogonalTraversal(start, target)) {
+      if (!_session.extendPath(cell)) {
+        break;
+      }
+      nextSegment.cells.add(cell);
+      _lastPointerCell = cell;
+    }
+    if (nextSegment.cells.isEmpty) {
+      _syntheticSegment = null;
+    }
+    _lastRawPointerCell = target;
   }
 
   void handlePointerEnd() {
     _session.endPath();
-    _lastPointerCell = null;
-    _activePointerId = null;
+    _clearPointerState();
   }
 
   void restart() {
     _session.restart();
+    _clearPointerState();
+  }
+
+  void _clearPointerState() {
     _lastPointerCell = null;
+    _lastRawPointerCell = null;
+    _syntheticSegment = null;
     _activePointerId = null;
   }
 
@@ -328,4 +377,19 @@ final class MindSparkGame extends FlameGame with DragCallbacks {
         board.left + (cell.x + 0.5) * cellSize,
         board.top + (cell.y + 0.5) * cellSize,
       );
+}
+
+final class _SyntheticSegment {
+  _SyntheticSegment({
+    required this.start,
+    required this.rawDx,
+    required this.rawDy,
+  });
+
+  final GridPosition start;
+  final int rawDx;
+  final int rawDy;
+  final List<GridPosition> cells = [];
+
+  int projection(int dx, int dy) => dx * rawDx + dy * rawDy;
 }

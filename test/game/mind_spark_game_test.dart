@@ -158,6 +158,68 @@ void main() {
     });
 
     test(
+      'partial reverse samples monotonically unwind a synthetic segment',
+      () {
+        final game = _game(level: _backtrackingLevel())
+          ..onGameResize(Vector2.all(500));
+
+        expect(game.handlePointerStart(_cellCenter(0, 0)), isTrue);
+        game.handlePointerUpdate(_cellCenter(4, 2));
+
+        const reverseSamples = [
+          GridPosition(3, 2),
+          GridPosition(3, 1),
+          GridPosition(2, 1),
+          GridPosition(2, 0),
+          GridPosition(1, 0),
+          GridPosition(0, 0),
+        ];
+        for (var index = 0; index < reverseSamples.length; index++) {
+          final sample = reverseSamples[index];
+          game.handlePointerUpdate(_cellCenter(sample.x, sample.y));
+          expect(
+            game.snapshot.paths['purple']!.cells.length,
+            6 - index,
+            reason: 'reverse sample $sample must remove one synthetic cell',
+          );
+        }
+
+        expect(game.snapshot.paths['purple']!.cells, const [
+          GridPosition(0, 0),
+        ]);
+      },
+    );
+
+    test('forward direction change starts a fresh reversible segment', () {
+      final game = _game(level: _backtrackingLevel())
+        ..onGameResize(Vector2.all(500));
+
+      expect(game.handlePointerStart(_cellCenter(0, 0)), isTrue);
+      game.handlePointerUpdate(_cellCenter(4, 2));
+      game.handlePointerUpdate(_cellCenter(3, 2));
+      expect(game.snapshot.paths['purple']!.cells.length, 6);
+
+      game.handlePointerUpdate(_cellCenter(4, 3));
+      expect(game.snapshot.paths['purple']!.cells, const [
+        GridPosition(0, 0),
+        GridPosition(1, 0),
+        GridPosition(2, 0),
+        GridPosition(3, 0),
+        GridPosition(4, 0),
+        GridPosition(4, 1),
+        GridPosition(4, 2),
+        GridPosition(4, 3),
+      ]);
+
+      game.handlePointerUpdate(_cellCenter(4, 2));
+      expect(
+        game.snapshot.paths['purple']!.cells.last,
+        const GridPosition(4, 2),
+      );
+      expect(game.snapshot.paths['purple']!.cells.length, 7);
+    });
+
+    test(
       'Flame callbacks retain the accepted pointer through its lifecycle',
       () {
         final game = _game()..onGameResize(Vector2.all(500));

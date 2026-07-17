@@ -62,6 +62,12 @@
     - [x] Flame olay kurulumunun gerçek API uygunluğunu incele; mümkünse pointer-ID yaşam döngüsünü üretim callback'leriyle test et
     - [x] Odaklı/tam testleri, analyzer ve diff kontrolünü çalıştır
     - [x] Task 5 rapor kronolojisini git/test kanıtına göre düzelt, sonuçları kaydet ve commit et
+  - [x] Task 5 kısmi ters izleme düzeltmesini tamamla
+    - [x] Çoklu kısmi ters pointer örneklerinin yolu monoton küçülttüğünü public seam üzerinden RED doğrula
+    - [x] Ters izleme sonrası yön değişiminin yeni bir ileri segment oluşturduğunu RED doğrula
+    - [x] Yalnız kabul edilen sentetik hücreleri tutan minimal segment geçmişi ve negatif projeksiyon uzlaştırmasını uygula
+    - [x] End/restart/yeni başlangıç/pointer-ID ve mevcut ters izleme regresyonlarını doğrula
+    - [x] Odaklı/tam testleri, analyzer ve diff kontrolünü çalıştır; raporu düzelt ve commit et
 - [ ] Analiz, test ve Android derleme doğrulamalarını çalıştır
 - [ ] Sonuçları ve kapsam kontrolünü bu dosyanın inceleme bölümüne kaydet
 
@@ -77,3 +83,4 @@
 - Task 4 inceleme düzeltmeleri: 20 odaklı ilerleme/kalıcılık testi ve 53 testlik tam paket geçti; sıralı mutasyonlar, değişmez model sahipliği, önceki değerli hata durumu, şema sabitleme ve güvenli Hive temizliği doğrulandı.
 - Task 5 commit durumu: `91166b4` 11 odaklı Flame adaptör testini birlikte ekledi; 53 testlik ebeveyn durumundan 64 testlik tam pakete çıktı. Ayrı bir 10-test commit'i yoktur; önceki rapordaki pre-regresyon `+11` kronolojisi hatalıydı.
 - Task 5 inceleme düzeltmeleri: 16 odaklı Flame adaptör testi ve 69 testlik tam paket geçti; iki yönlü kanonik ortogonal rota, tam hızlı geri izleme ve gerçek Flame olaylarıyla pointer-ID yaşam döngüsü doğrulandı. `flutter analyze` ve `git diff --check` sıfır sorunla tamamlandı.
+- Task 5 kısmi ters izleme düzeltmesi: 18 odaklı Flame adaptör testi ve 71 testlik tam paket geçti; kabul edilen sentetik segment geçmişi, negatif projeksiyonla çoklu kısmi geri izleme ve yön değişiminde yeni segment doğrulandı. `flutter analyze` ve `git diff --check` sıfır sorunla tamamlandı.
