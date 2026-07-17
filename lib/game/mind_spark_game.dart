@@ -102,6 +102,7 @@ final class MindSparkGame extends FlameGame with DragCallbacks {
     final segment = _syntheticSegment;
     if (segment != null && segment.projection(rawDx, rawDy) < 0) {
       var steps = rawDx.abs() + rawDy.abs();
+      var accepted = false;
       while (steps > 0 && segment.cells.isNotEmpty) {
         final previous = segment.cells.length == 1
             ? segment.start
@@ -111,12 +112,15 @@ final class MindSparkGame extends FlameGame with DragCallbacks {
         }
         segment.cells.removeLast();
         _lastPointerCell = previous;
+        accepted = true;
         steps--;
       }
       if (segment.cells.isEmpty) {
         _syntheticSegment = null;
       }
-      _lastRawPointerCell = target;
+      if (accepted) {
+        _lastRawPointerCell = target;
+      }
       return;
     }
 
@@ -125,7 +129,6 @@ final class MindSparkGame extends FlameGame with DragCallbacks {
       rawDx: rawDx,
       rawDy: rawDy,
     );
-    _syntheticSegment = nextSegment;
     for (final cell in _orthogonalTraversal(start, target)) {
       if (!_session.extendPath(cell)) {
         break;
@@ -133,10 +136,10 @@ final class MindSparkGame extends FlameGame with DragCallbacks {
       nextSegment.cells.add(cell);
       _lastPointerCell = cell;
     }
-    if (nextSegment.cells.isEmpty) {
-      _syntheticSegment = null;
+    if (nextSegment.cells.isNotEmpty) {
+      _syntheticSegment = nextSegment;
+      _lastRawPointerCell = target;
     }
-    _lastRawPointerCell = target;
   }
 
   void handlePointerEnd() {

@@ -219,6 +219,36 @@ void main() {
       expect(game.snapshot.paths['purple']!.cells.length, 7);
     });
 
+    test('rejected forward movement preserves the reversible segment', () {
+      final game = _game(level: _diagonalLevel())
+        ..onGameResize(Vector2.all(500));
+
+      expect(game.handlePointerStart(_cellCenter(0, 0)), isTrue);
+      game.handlePointerUpdate(_cellCenter(4, 2));
+      expect(game.snapshot.paths['purple']!.connected, isTrue);
+
+      game.handlePointerUpdate(_cellCenter(4, 3));
+      expect(game.snapshot.paths['purple']!.cells.length, 7);
+
+      const reverseSamples = [
+        GridPosition(3, 2),
+        GridPosition(3, 1),
+        GridPosition(2, 1),
+        GridPosition(2, 0),
+        GridPosition(1, 0),
+        GridPosition(0, 0),
+      ];
+      for (var index = 0; index < reverseSamples.length; index++) {
+        final sample = reverseSamples[index];
+        game.handlePointerUpdate(_cellCenter(sample.x, sample.y));
+        expect(
+          game.snapshot.paths['purple']!.cells.length,
+          6 - index,
+          reason: 'rejected forward input must preserve reverse history',
+        );
+      }
+    });
+
     test(
       'Flame callbacks retain the accepted pointer through its lifecycle',
       () {
@@ -330,6 +360,8 @@ LevelModel _diagonalLevel() => const LevelModel(
   points: [
     GridPoint(x: 0, y: 0, color: 'purple'),
     GridPoint(x: 4, y: 2, color: 'purple'),
+    GridPoint(x: 0, y: 4, color: 'blue'),
+    GridPoint(x: 4, y: 4, color: 'blue'),
   ],
 );
 

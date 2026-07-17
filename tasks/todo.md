@@ -68,6 +68,10 @@
     - [x] Yalnız kabul edilen sentetik hücreleri tutan minimal segment geçmişi ve negatif projeksiyon uzlaştırmasını uygula
     - [x] End/restart/yeni başlangıç/pointer-ID ve mevcut ters izleme regresyonlarını doğrula
     - [x] Odaklı/tam testleri, analyzer ve diff kontrolünü çalıştır; raporu düzelt ve commit et
+  - [x] Task 5 reddedilen ileri segment geçmişi düzeltmesini tamamla
+    - [x] Bağlı yol sonrası reddedilen ileri örneğin önceki segmenti koruduğunu public seam ile RED doğrula
+    - [x] Yeni segmenti yalnız en az bir domain kabulünden sonra kuran minimal düzeltmeyi uygula
+    - [x] Odaklı/tam testleri, analyzer ve diff kontrolünü çalıştır; raporu güncelle ve commit et
 - [ ] Analiz, test ve Android derleme doğrulamalarını çalıştır
 - [ ] Sonuçları ve kapsam kontrolünü bu dosyanın inceleme bölümüne kaydet
 
@@ -84,3 +88,4 @@
 - Task 5 commit durumu: `91166b4` 11 odaklı Flame adaptör testini birlikte ekledi; 53 testlik ebeveyn durumundan 64 testlik tam pakete çıktı. Ayrı bir 10-test commit'i yoktur; önceki rapordaki pre-regresyon `+11` kronolojisi hatalıydı.
 - Task 5 inceleme düzeltmeleri: 16 odaklı Flame adaptör testi ve 69 testlik tam paket geçti; iki yönlü kanonik ortogonal rota, tam hızlı geri izleme ve gerçek Flame olaylarıyla pointer-ID yaşam döngüsü doğrulandı. `flutter analyze` ve `git diff --check` sıfır sorunla tamamlandı.
 - Task 5 kısmi ters izleme düzeltmesi: 18 odaklı Flame adaptör testi ve 71 testlik tam paket geçti; kabul edilen sentetik segment geçmişi, negatif projeksiyonla çoklu kısmi geri izleme ve yön değişiminde yeni segment doğrulandı. `flutter analyze` ve `git diff --check` sıfır sorunla tamamlandı.
+- Task 5 reddedilen ileri segment düzeltmesi: 19 odaklı Flame adaptör testi ve 72 testlik tam paket geçti; yeni segmentin yalnız domain kabulünden sonra kurulması ve reddedilen bağlı-yol hareketinden sonra önceki geri izleme geçmişinin korunması doğrulandı. `flutter analyze` ve `git diff --check` sıfır sorunla tamamlandı.

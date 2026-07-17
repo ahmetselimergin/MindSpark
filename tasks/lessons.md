@@ -4,3 +4,4 @@
 - Optimistic persistence controllers must serialize state derivation and writes together; retry requests should read pending state only when their queued operation starts, so concurrent callers cannot duplicate or reorder saves.
 - Prefer Riverpod's public `AsyncNotifier.state` setter for previous-value merging; do not call `@internal` `AsyncValue` helpers or suppress analyzer warnings when the framework setter already provides the required behavior.
 - Reversible interpolation cannot be derived only from each pair of raw pointer samples: retain the accepted synthetic segment so partial opposite samples can request the domain's true penultimate cells without inventing an off-route path.
+- Treat replacement pointer segments as provisional: a rejected candidate must not erase the last accepted segment or advance reconciliation anchors.
