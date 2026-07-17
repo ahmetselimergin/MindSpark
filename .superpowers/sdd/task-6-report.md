@@ -147,3 +147,55 @@ git diff --check
 Result: no whitespace errors. Exit code: 0.
 
 No dependencies, gradients, glass effects, remote fonts, life indicators, animations, or unrelated features were added.
+
+## Remaining review fixes
+
+### Splash retained-data error precedence
+
+RED command:
+
+```text
+flutter test test/widget_test.dart --plain-name 'splash does not navigate with retained data on retry error'
+```
+
+Observed the alternating retry navigate away from Splash instead of showing `Progress could not be loaded.`: progress succeeded while levels failed on the first attempt, then levels succeeded while progress failed with retained previous data on retry. Exit code: 1.
+
+GREEN evidence: Splash readiness now requires value, no error, and no active loading for both providers. The post-frame callback reads and validates both providers again before replacing the route, preventing a state transition after scheduling from navigating to Home. The alternating retry remains on Splash with the progress error and no Home content.
+
+### Bootstrap retry re-entrancy
+
+RED command:
+
+```text
+flutter test test/widget_test.dart --plain-name 'rapid bootstrap retry starts one initializer and mounts once'
+```
+
+Observed three initializer calls after invoking one captured RETRY callback twice synchronously; expected two total attempts including initial failure. Exit code: 1.
+
+GREEN evidence: bootstrap claims a synchronous `_initializing` latch before invoking the initializer and assigns an attempt identity. Repeated captured callbacks are inert while loading, the visible retry action is replaced by progress UI, and only the current attempt may publish success or failure. The regression proves one new initializer invocation and one progress-repository load/mount.
+
+### Updated verification
+
+```text
+flutter test test/widget_test.dart test/features/app_flow_test.dart
+```
+
+Result: 24 focused widget tests passed, 0 failed. Exit code: 0.
+
+```text
+flutter test
+```
+
+Result: 95 tests passed, 0 failed. Exit code: 0.
+
+```text
+flutter analyze
+```
+
+Result: no issues found. Exit code: 0.
+
+```text
+git diff --check
+```
+
+Result: no whitespace errors. Exit code: 0.

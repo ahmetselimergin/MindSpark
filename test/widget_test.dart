@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mind_spark/app/app.dart';
 import 'package:mind_spark/main.dart' as app;
 import 'package:mind_spark/models/level_model.dart';
+import 'package:mind_spark/models/player_progress.dart';
 import 'package:mind_spark/repositories/level_repository.dart';
 import 'package:mind_spark/repositories/progress_repository.dart';
 import 'package:mind_spark/state/app_progress_controller.dart';
@@ -36,6 +37,52 @@ void main() {
 
     expect(attempts, 2);
     expect(find.text('Level 1'), findsOneWidget);
+  });
+
+  testWidgets('rapid bootstrap retry starts one initializer and mounts once', (
+    tester,
+  ) async {
+    var attempts = 0;
+    final retry = Completer<ProgressRepository>();
+    final repository = _CountingProgressRepository();
+
+    await tester.pumpWidget(
+      app.ProgressBootstrap(
+        initializer: () {
+          attempts++;
+          if (attempts == 1) {
+            return Future<ProgressRepository>.error(
+              StateError('Hive unavailable'),
+            );
+          }
+          if (attempts == 2) {
+            return retry.future;
+          }
+          return Future<ProgressRepository>.value(InMemoryProgressRepository());
+        },
+      ),
+    );
+    await tester.pump();
+
+    final retryButton = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'RETRY'),
+    );
+    retryButton.onPressed!();
+    retryButton.onPressed!();
+    await tester.pump();
+
+    expect(attempts, 2);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('RETRY'), findsNothing);
+
+    retry.complete(repository);
+    for (var pump = 0; pump < 20 && repository.loadAttempts == 0; pump++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(attempts, 2);
+    expect(repository.loadAttempts, 1);
+    expect(find.text('Progress storage could not be opened.'), findsNothing);
   });
 
   testWidgets('splash waits while initialization is still loading', (
@@ -79,6 +126,49 @@ void main() {
 
     expect(attempts, 2);
     expect(find.text('Level 1'), findsOneWidget);
+  });
+
+  testWidgets('splash does not navigate with retained data on retry error', (
+    tester,
+  ) async {
+    var levelAttempts = 0;
+    var progressAttempts = 0;
+    final levelRepository = _TestLevelRepository(
+      load: () async {
+        levelAttempts++;
+        if (levelAttempts == 1) {
+          throw const LevelLoadException('levels unavailable');
+        }
+        return _levels;
+      },
+    );
+    final progressRepository = _TestProgressRepository(
+      loadProgress: () async {
+        progressAttempts++;
+        if (progressAttempts == 2) {
+          throw StateError('progress unavailable');
+        }
+        return const PlayerProgress.initial();
+      },
+    );
+
+    await tester.pumpWidget(
+      _testApp(
+        levelRepository: levelRepository,
+        progressRepository: progressRepository,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Levels could not be loaded.'), findsOneWidget);
+
+    await tester.tap(find.text('RETRY'));
+    await tester.pumpAndSettle();
+
+    expect(levelAttempts, 2);
+    expect(progressAttempts, 2);
+    expect(find.text('Progress could not be loaded.'), findsOneWidget);
+    expect(find.text('PLAY'), findsNothing);
+    expect(find.text('Best Score: 0'), findsNothing);
   });
 
   testWidgets('home shows the current level and score', (tester) async {
@@ -143,4 +233,29 @@ final class _TestLevelRepository implements LevelRepository {
     final levels = await loadLevels();
     return levels.firstWhere((level) => level.id == id);
   }
+}
+
+final class _TestProgressRepository implements ProgressRepository {
+  _TestProgressRepository({required this.loadProgress});
+
+  final Future<PlayerProgress> Function() loadProgress;
+
+  @override
+  Future<PlayerProgress> load() => loadProgress();
+
+  @override
+  Future<void> save(PlayerProgress progress) async {}
+}
+
+final class _CountingProgressRepository implements ProgressRepository {
+  int loadAttempts = 0;
+
+  @override
+  Future<PlayerProgress> load() async {
+    loadAttempts++;
+    return const PlayerProgress.initial();
+  }
+
+  @override
+  Future<void> save(PlayerProgress progress) async {}
 }

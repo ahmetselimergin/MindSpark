@@ -21,11 +21,18 @@ final class _SplashScreenState extends ConsumerState<SplashScreen> {
     final levels = ref.watch(levelsProvider);
     final progress = ref.watch(appProgressControllerProvider);
 
-    if (levels.hasValue && progress.hasValue && !_navigationScheduled) {
+    if (_isReady(levels) && _isReady(progress) && !_navigationScheduled) {
       _navigationScheduled = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
+        if (!mounted) {
+          return;
+        }
+        final currentLevels = ref.read(levelsProvider);
+        final currentProgress = ref.read(appProgressControllerProvider);
+        if (_isReady(currentLevels) && _isReady(currentProgress)) {
           Navigator.of(context).pushReplacementNamed(AppRoutes.home);
+        } else {
+          _navigationScheduled = false;
         }
       });
     }
@@ -76,6 +83,10 @@ final class _SplashScreenState extends ConsumerState<SplashScreen> {
     ref.invalidate(levelsProvider);
     ref.invalidate(appProgressControllerProvider);
   }
+}
+
+bool _isReady(AsyncValue<Object?> value) {
+  return value.hasValue && !value.hasError && !value.isLoading;
 }
 
 final class _InitializationError extends StatelessWidget {

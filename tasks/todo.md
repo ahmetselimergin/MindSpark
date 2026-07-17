@@ -80,6 +80,8 @@
     - [x] Play/Next/Home geçişlerini anında kilitleyen çift tetikleme regresyonlarını RED/GREEN doğrula
     - [x] Odaklı/tam testleri, analyzer ve diff kontrolünü çalıştır
     - [x] Task 6 raporuna kanıt ekle ve düzeltmeleri commit et
+    - [x] Yeniden denemede korunan eski `AsyncValue` verisinin hata durumunu başarı saymadığını RED/GREEN doğrula
+    - [x] Bootstrap yeniden deneme geri çağrılarını eşzamanlı kilit ve deneme kimliğiyle tek başlatma olarak RED/GREEN doğrula
 - [ ] Analiz, test ve Android derleme doğrulamalarını çalıştır
 - [ ] Sonuçları ve kapsam kontrolünü bu dosyanın inceleme bölümüne kaydet
 
@@ -123,3 +125,4 @@
 
 - Task 6: 9 focused widget tests and the 80-test full suite passed; `flutter analyze` and `git diff --check` completed cleanly. Splash initialization, explicit retry, one-game gameplay lifetime, once-only completion, retryable save failure, repository-order next-level navigation, final-level Home behavior, and safe invalid-route handling are covered.
 - Task 6 inceleme düzeltmeleri: 22 odaklı widget testi ve 93 testlik tam paket geçti; Hive açılış yeniden denemesi, kilitli/eksik rota koruması, kaydetme kanıtı, 320×568 + 2.0 metin ölçeği ve çift geçiş kilitleri doğrulandı. `flutter analyze` ve `git diff --check` temiz tamamlandı.
+- Task 6 kalan inceleme düzeltmeleri: 24 odaklı widget testi ve 95 testlik tam paket geçti; korunan eski verili `AsyncError` Splash'ta kalıyor ve hızlı bootstrap yeniden denemeleri yalnız tek initializer/repository mount üretiyor. Analyzer ve diff kontrolü temiz tamamlandı.

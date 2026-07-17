@@ -32,6 +32,8 @@ final class ProgressBootstrap extends StatefulWidget {
 final class _ProgressBootstrapState extends State<ProgressBootstrap> {
   ProgressRepository? _repository;
   Object? _error;
+  bool _initializing = false;
+  int _attempt = 0;
 
   @override
   void initState() {
@@ -40,6 +42,11 @@ final class _ProgressBootstrapState extends State<ProgressBootstrap> {
   }
 
   Future<void> _initialize() async {
+    if (_initializing) {
+      return;
+    }
+    _initializing = true;
+    final attempt = ++_attempt;
     setState(() {
       _repository = null;
       _error = null;
@@ -48,12 +55,18 @@ final class _ProgressBootstrapState extends State<ProgressBootstrap> {
       final repository = await Future<ProgressRepository>.sync(
         widget.initializer,
       );
-      if (mounted) {
-        setState(() => _repository = repository);
+      if (mounted && attempt == _attempt) {
+        setState(() {
+          _repository = repository;
+          _initializing = false;
+        });
       }
     } catch (error) {
-      if (mounted) {
-        setState(() => _error = error);
+      if (mounted && attempt == _attempt) {
+        setState(() {
+          _error = error;
+          _initializing = false;
+        });
       }
     }
   }
