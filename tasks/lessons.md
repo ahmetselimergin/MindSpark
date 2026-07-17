@@ -7,3 +7,5 @@
 - Treat replacement pointer segments as provisional: a rejected candidate must not erase the last accepted segment or advance reconciliation anchors.
 - Riverpod `AsyncValue.hasValue` is not proof of success because refresh errors can retain previous data; gate side effects on no error/no loading and revalidate again when a post-frame callback executes.
 - Retry callbacks need a synchronous in-flight latch before the initializer is invoked or the UI rebuilds; pair it with attempt identity so stale async completions cannot win state ownership.
+- End-of-content is a distinct product state: `highestUnlockedLevel` cannot double as “next playable” after the final level is completed. Acceptance tests must return Home after final completion and assert that the last level is not silently reopened.
+- Passing widget tests is not evidence of visual quality. Before calling a UI complete, inspect a rendered phone-sized frame for hierarchy, board contrast, control affordance, and unstructured empty space.

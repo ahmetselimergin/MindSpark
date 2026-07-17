@@ -1,5 +1,15 @@
 # MindSpark MVP Çalışma Planı
 
+## Progression + UI Refresh
+
+- [ ] Son level tekrarını RED regresyon testiyle yeniden üret
+- [ ] Bundle içeriğini canonical çözümleri test edilen 12 level'a çıkar
+- [ ] Tüm level'lar bitince açık tamamlanma ve bilinçli replay durumu göster
+- [ ] Board renderer'ı koyu arcade-blueprint görsel sistemine geçir
+- [ ] Home, Gameplay ve Result ekran hiyerarşisini yeniden tasarla
+- [ ] 320×568 + 2× metin, tam test, analyzer ve APK kapılarını çalıştır
+- [ ] Telefon boyutunda render yakala ve görsel olarak incele
+
 ## Tasarım ve Onay
 
 - [x] Mevcut repo durumunu, belgeleri ve git geçmişini incele
