@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -120,6 +122,101 @@ void main() {
     expect(find.text('LEVEL COMPLETE'), findsOneWidget);
     expect(find.text('+100'), findsOneWidget);
     expect(progress.attempts, hasLength(2));
+    expect(progress.saved, hasLength(1));
+    expect(identical(progress.attempts[0], progress.attempts[1]), isTrue);
+    expect(progress.saved.single.completedLevelIds, {1});
+  });
+
+  testWidgets('no-op save retry does not navigate without a candidate', (
+    tester,
+  ) async {
+    final harness = _GameHarness();
+    final progress = _RecordingProgressRepository()..failNextSave = true;
+    await tester.pumpWidget(
+      _testApp(harness: harness, progressRepository: progress),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('PLAY'));
+    await _pumpRoute(tester);
+    harness.completeLatest();
+    await _pumpRoute(tester);
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(GameplayScreen)),
+    );
+    container.invalidate(appProgressControllerProvider);
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.text('RETRY SAVE'));
+    await _pumpRoute(tester);
+
+    expect(find.text('LEVEL COMPLETE'), findsNothing);
+    expect(find.text('Progress must be loaded again.'), findsOneWidget);
+    expect(find.text('RETRY PROGRESS'), findsOneWidget);
+    expect(progress.attempts, hasLength(1));
+  });
+
+  testWidgets('save retry does not navigate while progress is loading', (
+    tester,
+  ) async {
+    final harness = _GameHarness();
+    final progress = _RecordingProgressRepository()..failNextSave = true;
+    await tester.pumpWidget(
+      _testApp(harness: harness, progressRepository: progress),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('PLAY'));
+    await _pumpRoute(tester);
+    harness.completeLatest();
+    await _pumpRoute(tester);
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(GameplayScreen)),
+    );
+    final reload = Completer<PlayerProgress>();
+    progress.nextLoad = reload;
+    container.invalidate(appProgressControllerProvider);
+    await tester.pump();
+    await tester.tap(find.text('RETRY SAVE'));
+    await _pumpRoute(tester);
+
+    expect(find.text('LEVEL COMPLETE'), findsNothing);
+    expect(find.text('Progress must be loaded again.'), findsOneWidget);
+    expect(progress.attempts, hasLength(1));
+
+    reload.complete(progress.value);
+    await tester.pump();
+    await tester.pump();
+  });
+
+  testWidgets('save retry does not navigate after progress load error', (
+    tester,
+  ) async {
+    final harness = _GameHarness();
+    final progress = _RecordingProgressRepository()..failNextSave = true;
+    await tester.pumpWidget(
+      _testApp(harness: harness, progressRepository: progress),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('PLAY'));
+    await _pumpRoute(tester);
+    harness.completeLatest();
+    await _pumpRoute(tester);
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(GameplayScreen)),
+    );
+    progress.failNextLoad = true;
+    container.invalidate(appProgressControllerProvider);
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.text('RETRY SAVE'));
+    await _pumpRoute(tester);
+
+    expect(find.text('LEVEL COMPLETE'), findsNothing);
+    expect(find.text('Progress must be loaded again.'), findsOneWidget);
+    expect(find.text('RETRY PROGRESS'), findsOneWidget);
+    expect(progress.attempts, hasLength(1));
   });
 
   testWidgets('finishing the final repository level returns home', (
@@ -171,6 +268,172 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('This screen could not be opened.'), findsOneWidget);
+  });
+
+  testWidgets('existing but locked gameplay level is rejected', (tester) async {
+    final harness = _GameHarness();
+    final navigatorKey = GlobalKey<NavigatorState>();
+    await tester.pumpWidget(
+      _testApp(harness: harness, navigatorKey: navigatorKey),
+    );
+    await tester.pumpAndSettle();
+
+    navigatorKey.currentState!.pushNamed(
+      AppRoutes.gameplay,
+      arguments: const GameplayRouteArgs(5),
+    );
+    await _pumpRoute(tester);
+
+    expect(find.text('This level could not be opened.'), findsOneWidget);
+    expect(harness.games, isEmpty);
+  });
+
+  testWidgets('missing gameplay level is rejected', (tester) async {
+    final harness = _GameHarness();
+    final navigatorKey = GlobalKey<NavigatorState>();
+    await tester.pumpWidget(
+      _testApp(harness: harness, navigatorKey: navigatorKey),
+    );
+    await tester.pumpAndSettle();
+
+    navigatorKey.currentState!.pushNamed(
+      AppRoutes.gameplay,
+      arguments: const GameplayRouteArgs(99),
+    );
+    await _pumpRoute(tester);
+
+    expect(find.text('This level could not be opened.'), findsOneWidget);
+    expect(harness.games, isEmpty);
+  });
+
+  testWidgets('home reports saved highest level missing from assets', (
+    tester,
+  ) async {
+    final progress = _RecordingProgressRepository(
+      PlayerProgress(
+        schemaVersion: 1,
+        highestUnlockedLevel: 3,
+        completedLevelIds: const {1},
+        totalScore: 100,
+        lives: 3,
+        soundEnabled: true,
+        vibrationEnabled: true,
+      ),
+    );
+    await tester.pumpWidget(
+      _testApp(harness: _GameHarness(), progressRepository: progress),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Saved progress does not match the available levels.'),
+      findsOneWidget,
+    );
+    expect(find.text('RETRY'), findsOneWidget);
+    expect(find.text('PLAY'), findsNothing);
+  });
+
+  testWidgets('missing result level offers a Home action', (tester) async {
+    final navigatorKey = GlobalKey<NavigatorState>();
+    await tester.pumpWidget(
+      _testApp(harness: _GameHarness(), navigatorKey: navigatorKey),
+    );
+    await tester.pumpAndSettle();
+
+    navigatorKey.currentState!.pushNamed(
+      AppRoutes.result,
+      arguments: const ResultRouteArgs(levelId: 99, awardedScore: 100),
+    );
+    await _pumpRoute(tester);
+
+    expect(find.text('This result could not be opened.'), findsOneWidget);
+    expect(find.text('HOME'), findsOneWidget);
+  });
+
+  testWidgets('Home fits 320x568 at 2x text scale', (tester) async {
+    _useCompactLargeTextView(tester);
+    await tester.pumpWidget(_testApp(harness: _GameHarness()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('PLAY'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Gameplay fits 320x568 at 2x text scale', (tester) async {
+    final harness = _GameHarness();
+    await tester.pumpWidget(_testApp(harness: harness));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('PLAY'));
+    await _pumpRoute(tester);
+    tester.takeException();
+    _useCompactLargeTextView(tester);
+    await tester.pump();
+
+    expect(find.text('RESTART'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Result fits 320x568 at 2x text scale', (tester) async {
+    final harness = _GameHarness();
+    await tester.pumpWidget(_testApp(harness: harness));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('PLAY'));
+    await _pumpRoute(tester);
+    harness.completeLatest();
+    await _pumpRoute(tester);
+    tester.takeException();
+    _useCompactLargeTextView(tester);
+    await tester.pump();
+
+    expect(find.text('NEXT LEVEL'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('rapid Play callback creates one gameplay route', (tester) async {
+    final harness = _GameHarness();
+    await tester.pumpWidget(_testApp(harness: harness));
+    await tester.pumpAndSettle();
+
+    final play = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'PLAY'),
+    );
+    play.onPressed!();
+    play.onPressed!();
+    await _pumpRoute(tester);
+
+    expect(harness.games, hasLength(1));
+  });
+
+  testWidgets('rapid Next callback creates one next-level game', (
+    tester,
+  ) async {
+    final harness = _GameHarness();
+    await tester.pumpWidget(_testApp(harness: harness));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('PLAY'));
+    await _pumpRoute(tester);
+    harness.completeLatest();
+    await _pumpRoute(tester);
+
+    final next = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'NEXT LEVEL'),
+    );
+    next.onPressed!();
+    next.onPressed!();
+    await _pumpRoute(tester);
+
+    expect(harness.games, hasLength(2));
+  });
+}
+
+void _useCompactLargeTextView(WidgetTester tester) {
+  tester.view.physicalSize = const Size(320, 568);
+  tester.view.devicePixelRatio = 1;
+  tester.platformDispatcher.textScaleFactorTestValue = 2;
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+    tester.platformDispatcher.clearTextScaleFactorTestValue();
   });
 }
 
@@ -243,11 +506,21 @@ final class _RecordingProgressRepository implements ProgressRepository {
 
   PlayerProgress value;
   bool failNextSave = false;
+  bool failNextLoad = false;
+  Completer<PlayerProgress>? nextLoad;
   final List<PlayerProgress> attempts = [];
   final List<PlayerProgress> saved = [];
 
   @override
-  Future<PlayerProgress> load() async => value;
+  Future<PlayerProgress> load() async {
+    if (failNextLoad) {
+      failNextLoad = false;
+      throw StateError('progress unavailable');
+    }
+    final pendingLoad = nextLoad;
+    nextLoad = null;
+    return pendingLoad == null ? value : pendingLoad.future;
+  }
 
   @override
   Future<void> save(PlayerProgress progress) async {

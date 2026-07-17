@@ -72,6 +72,14 @@
     - [x] Bağlı yol sonrası reddedilen ileri örneğin önceki segmenti koruduğunu public seam ile RED doğrula
     - [x] Yeni segmenti yalnız en az bir domain kabulünden sonra kuran minimal düzeltmeyi uygula
     - [x] Odaklı/tam testleri, analyzer ve diff kontrolünü çalıştır; raporu güncelle ve commit et
+  - [x] Task 6 inceleme düzeltmelerini tamamla
+    - [x] Hive bootstrap hata→yeniden dene→başarı akışını widget RED/GREEN ile doğrula
+    - [x] Kilitli/eksik seviye rota yetkilendirmesini ve güvenli hata eylemlerini RED/GREEN doğrula
+    - [x] Kaydetme yeniden denemesini gerçek kalıcılık kanıtına bağlayan regresyonları RED/GREEN doğrula
+    - [x] Küçük ekran + 2.0 metin ölçeğinde Home/Gameplay/Result taşmamasını RED/GREEN doğrula
+    - [x] Play/Next/Home geçişlerini anında kilitleyen çift tetikleme regresyonlarını RED/GREEN doğrula
+    - [x] Odaklı/tam testleri, analyzer ve diff kontrolünü çalıştır
+    - [x] Task 6 raporuna kanıt ekle ve düzeltmeleri commit et
 - [ ] Analiz, test ve Android derleme doğrulamalarını çalıştır
 - [ ] Sonuçları ve kapsam kontrolünü bu dosyanın inceleme bölümüne kaydet
 
@@ -114,3 +122,4 @@
 ### Review
 
 - Task 6: 9 focused widget tests and the 80-test full suite passed; `flutter analyze` and `git diff --check` completed cleanly. Splash initialization, explicit retry, one-game gameplay lifetime, once-only completion, retryable save failure, repository-order next-level navigation, final-level Home behavior, and safe invalid-route handling are covered.
+- Task 6 inceleme düzeltmeleri: 22 odaklı widget testi ve 93 testlik tam paket geçti; Hive açılış yeniden denemesi, kilitli/eksik rota koruması, kaydetme kanıtı, 320×568 + 2.0 metin ölçeği ve çift geçiş kilitleri doğrulandı. `flutter analyze` ve `git diff --check` temiz tamamlandı.

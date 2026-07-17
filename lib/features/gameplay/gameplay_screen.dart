@@ -30,6 +30,7 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen> {
   MindSparkGame? _game;
   bool _completionHandled = false;
   bool _saveFailed = false;
+  bool _needsProgressReload = false;
   bool _saving = false;
   bool _navigated = false;
   int _awardedScore = 0;
@@ -37,28 +38,46 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen> {
   @override
   Widget build(BuildContext context) {
     final levelsState = ref.watch(levelsProvider);
-    return levelsState.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (_, _) => const _GameplayLoadError(),
-      data: (levels) {
-        final level = _findLevel(levels, widget.levelId);
-        if (level == null) {
-          return const _GameplayLoadError();
-        }
-        final game = _game ??= ref.read(mindSparkGameFactoryProvider)(
-          level,
-          _handleCompletion,
-        );
-        return _GameplayView(
-          levelId: level.id,
-          game: game,
-          saveFailed: _saveFailed,
-          saving: _saving,
-          onRestart: game.restart,
-          onRetrySave: _retrySave,
-        );
-      },
+    final progressState = ref.watch(appProgressControllerProvider);
+    final existingGame = _game;
+    if (existingGame != null) {
+      return _buildGame(existingGame);
+    }
+    if (levelsState.hasError || progressState.hasError) {
+      return const _GameplayLoadError();
+    }
+    final levels = levelsState.value;
+    final progress = progressState.value;
+    if (levels == null || progress == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    final currentIndex = levels.indexWhere(
+      (level) => level.id == widget.levelId,
+    );
+    final highestUnlockedIndex = levels.indexWhere(
+      (level) => level.id == progress.highestUnlockedLevel,
+    );
+    if (currentIndex < 0 ||
+        highestUnlockedIndex < 0 ||
+        currentIndex > highestUnlockedIndex) {
+      return const _GameplayLoadError();
+    }
+    final game = _game = ref.read(mindSparkGameFactoryProvider)(
+      levels[currentIndex],
+      _handleCompletion,
+    );
+    return _buildGame(game);
+  }
+
+  Widget _buildGame(MindSparkGame game) {
+    return _GameplayView(
+      levelId: widget.levelId,
+      game: game,
+      saveFailed: _saveFailed,
+      needsProgressReload: _needsProgressReload,
+      saving: _saving,
+      onRestart: game.restart,
+      onRetry: _needsProgressReload ? _retryProgress : _retrySave,
     );
   }
 
@@ -72,7 +91,10 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen> {
     final before = ref.read(appProgressControllerProvider).value;
     if (before == null) {
       if (mounted) {
-        setState(() => _saveFailed = true);
+        setState(() {
+          _saveFailed = true;
+          _needsProgressReload = true;
+        });
       }
       return;
     }
@@ -92,8 +114,18 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen> {
             after.completedLevelIds.contains(widget.levelId)
         ? 100
         : 0;
-    if (savedState.hasError) {
-      setState(() => _saveFailed = true);
+    final completionPersisted =
+        savedState.hasValue &&
+        !savedState.hasError &&
+        after != null &&
+        after.completedLevelIds.contains(widget.levelId);
+    if (!completionPersisted) {
+      setState(() {
+        _saveFailed = true;
+        _needsProgressReload = !ref
+            .read(appProgressControllerProvider.notifier)
+            .hasPendingSave;
+      });
       return;
     }
     _navigateToResult();
@@ -109,11 +141,48 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen> {
       return;
     }
     final savedState = ref.read(appProgressControllerProvider);
-    if (savedState.hasError) {
-      setState(() => _saving = false);
+    final savedProgress = savedState.value;
+    final completionPersisted =
+        savedState.hasValue &&
+        !savedState.hasError &&
+        savedProgress != null &&
+        savedProgress.completedLevelIds.contains(widget.levelId);
+    if (!completionPersisted) {
+      setState(() {
+        _saving = false;
+        _needsProgressReload = !ref
+            .read(appProgressControllerProvider.notifier)
+            .hasPendingSave;
+      });
       return;
     }
     _navigateToResult();
+  }
+
+  Future<void> _retryProgress() async {
+    if (_saving || _navigated) {
+      return;
+    }
+    setState(() => _saving = true);
+    ref.invalidate(appProgressControllerProvider);
+    try {
+      await ref.read(appProgressControllerProvider.future);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _saving = false;
+      _saveFailed = false;
+      _needsProgressReload = false;
+      _completionHandled = false;
+    });
+    await _handleCompletion();
   }
 
   void _navigateToResult() {
@@ -136,17 +205,19 @@ final class _GameplayView extends StatelessWidget {
     required this.levelId,
     required this.game,
     required this.saveFailed,
+    required this.needsProgressReload,
     required this.saving,
     required this.onRestart,
-    required this.onRetrySave,
+    required this.onRetry,
   });
 
   final int levelId;
   final MindSparkGame game;
   final bool saveFailed;
+  final bool needsProgressReload;
   final bool saving;
   final VoidCallback onRestart;
-  final VoidCallback onRetrySave;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -156,8 +227,11 @@ final class _GameplayView extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
           child: Column(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 12,
+                runSpacing: 4,
                 children: [
                   Text(
                     'Level $levelId',
@@ -188,7 +262,11 @@ final class _GameplayView extends StatelessWidget {
               ),
               const SizedBox(height: 18),
               if (saveFailed)
-                _SaveFailure(saving: saving, onRetry: onRetrySave)
+                _SaveFailure(
+                  needsProgressReload: needsProgressReload,
+                  saving: saving,
+                  onRetry: onRetry,
+                )
               else
                 Text(
                   'Connect matching sparks to fill the board.',
@@ -206,8 +284,13 @@ final class _GameplayView extends StatelessWidget {
 }
 
 final class _SaveFailure extends StatelessWidget {
-  const _SaveFailure({required this.saving, required this.onRetry});
+  const _SaveFailure({
+    required this.needsProgressReload,
+    required this.saving,
+    required this.onRetry,
+  });
 
+  final bool needsProgressReload;
   final bool saving;
   final VoidCallback onRetry;
 
@@ -215,14 +298,22 @@ final class _SaveFailure extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Text(
-          'Progress was not saved.',
-          style: TextStyle(color: AppColors.coralPulse),
+        Text(
+          needsProgressReload
+              ? 'Progress must be loaded again.'
+              : 'Progress was not saved.',
+          style: const TextStyle(color: AppColors.coralPulse),
         ),
         const SizedBox(height: 10),
         FilledButton(
           onPressed: saving ? null : onRetry,
-          child: Text(saving ? 'SAVING…' : 'RETRY SAVE'),
+          child: Text(
+            saving
+                ? 'SAVING…'
+                : needsProgressReload
+                ? 'RETRY PROGRESS'
+                : 'RETRY SAVE',
+          ),
         ),
       ],
     );
@@ -255,15 +346,6 @@ final class _GameplayLoadError extends StatelessWidget {
       ),
     );
   }
-}
-
-LevelModel? _findLevel(List<LevelModel> levels, int id) {
-  for (final level in levels) {
-    if (level.id == id) {
-      return level;
-    }
-  }
-  return null;
 }
 
 int? _nextLevelId(List<LevelModel> levels, int id) {

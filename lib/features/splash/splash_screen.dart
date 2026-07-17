@@ -33,30 +33,37 @@ final class _SplashScreenState extends ConsumerState<SplashScreen> {
     final error = levels.error ?? progress.error;
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SparkTrail(),
-                const SizedBox(height: 20),
-                Text(
-                  'MindSpark',
-                  style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                    fontSize: 46,
-                    letterSpacing: -1,
-                  ),
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SparkTrail(),
+                    const SizedBox(height: 20),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'MindSpark',
+                        style: Theme.of(context).textTheme.displayMedium
+                            ?.copyWith(fontSize: 46, letterSpacing: -1),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    if (error == null)
+                      const CircularProgressIndicator()
+                    else
+                      _InitializationError(
+                        isLevelError: levels.hasError,
+                        onRetry: _retry,
+                      ),
+                  ],
                 ),
-                const SizedBox(height: 28),
-                if (error == null)
-                  const CircularProgressIndicator()
-                else
-                  _InitializationError(
-                    isLevelError: levels.hasError,
-                    onRetry: _retry,
-                  ),
-              ],
+              ),
             ),
           ),
         ),

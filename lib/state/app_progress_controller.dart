@@ -18,6 +18,8 @@ final class AppProgressController extends AsyncNotifier<PlayerProgress> {
 
   ProgressRepository get _repository => ref.read(progressRepositoryProvider);
 
+  bool get hasPendingSave => _lastUnsavedProgress != null;
+
   @override
   Future<PlayerProgress> build() async {
     _lastUnsavedProgress = null;

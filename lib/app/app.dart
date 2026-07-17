@@ -19,7 +19,9 @@ final levelsProvider = FutureProvider<List<LevelModel>>((ref) async {
   if (levels.isEmpty) {
     throw const LevelLoadException('No playable levels were found');
   }
-  return levels;
+  return List<LevelModel>.unmodifiable(
+    [...levels]..sort((first, second) => first.id.compareTo(second.id)),
+  );
 }, retry: (_, _) => null);
 
 final class MindSparkApp extends StatelessWidget {

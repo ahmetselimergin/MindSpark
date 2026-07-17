@@ -4,12 +4,40 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mind_spark/app/app.dart';
+import 'package:mind_spark/main.dart' as app;
 import 'package:mind_spark/models/level_model.dart';
 import 'package:mind_spark/repositories/level_repository.dart';
 import 'package:mind_spark/repositories/progress_repository.dart';
 import 'package:mind_spark/state/app_progress_controller.dart';
 
 void main() {
+  testWidgets('bootstrap failure can retry and mount the app', (tester) async {
+    var attempts = 0;
+
+    await tester.pumpWidget(
+      app.ProgressBootstrap(
+        initializer: () async {
+          attempts++;
+          if (attempts == 1) {
+            throw StateError('Hive unavailable');
+          }
+          return InMemoryProgressRepository();
+        },
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('MindSpark'), findsOneWidget);
+    expect(find.text('Progress storage could not be opened.'), findsOneWidget);
+    expect(find.text('RETRY'), findsOneWidget);
+
+    await tester.tap(find.text('RETRY'));
+    await tester.pumpAndSettle();
+
+    expect(attempts, 2);
+    expect(find.text('Level 1'), findsOneWidget);
+  });
+
   testWidgets('splash waits while initialization is still loading', (
     tester,
   ) async {
