@@ -12,7 +12,7 @@
 
 ## Uygulama
 
-- [ ] Onaylanan uygulama planını test-öncelikli olarak yürüt
+- [x] Onaylanan uygulama planını test-öncelikli olarak yürüt
   - [x] Task 2 model doğrulama testlerini RED/GREEN tamamla
   - [x] Task 2 repository testlerini RED/GREEN tamamla
   - [x] Üç çözülebilir 5×5 seviyeyi bundle'a ekle
@@ -82,12 +82,21 @@
     - [x] Task 6 raporuna kanıt ekle ve düzeltmeleri commit et
     - [x] Yeniden denemede korunan eski `AsyncValue` verisinin hata durumunu başarı saymadığını RED/GREEN doğrula
     - [x] Bootstrap yeniden deneme geri çağrılarını eşzamanlı kilit ve deneme kimliğiyle tek başlatma olarak RED/GREEN doğrula
-- [ ] Analiz, test ve Android derleme doğrulamalarını çalıştır
-- [ ] Sonuçları ve kapsam kontrolünü bu dosyanın inceleme bölümüne kaydet
+- [x] Analiz, test ve Android derleme doğrulamalarını çalıştır
+- [x] Sonuçları ve kapsam kontrolünü bu dosyanın inceleme bölümüne kaydet
+
+## Task 7 — Kabul doğrulaması ve dokümantasyon
+
+- [x] Aynı `InMemoryProgressRepository` ile iki ayrı `ProviderScope` arasında tamamlama, yeniden oluşturma ve tekrar oynama akışını widget testiyle doğrula
+- [x] Ürün kapsamını, mimari sahipliği, önkoşulları, kesin komutları, çevrimdışı çalışmayı ve sonraki fazları README'de belgele
+- [x] `dart format lib test` ve `git diff --check` kontrollerini çalıştır
+- [x] `flutter pub get`, `flutter analyze`, `flutter test` ve `flutter build apk --debug` kapılarını taze çalıştır
+- [x] APK yolunu ve boyutunu doğrula; kesin sonuçları Task 7 raporuna ve inceleme bölümüne kaydet
+- [x] Yalnız tüm kapılar geçtikten sonra Task 7 değişikliklerini commit et
 
 ## İnceleme
 
-- Tasarım aşaması devam ediyor.
+- Onaylanan oynanabilir çekirdek kapsamı tamamlandı.
 - Task 2: 11 odaklı test geçti; `flutter analyze` sıfır sorunla tamamlandı.
 - Task 2: Seviye 1 yatay satırlar, seviye 2 dikey sütunlar, seviye 3 ise üst satır ve iki serpantin yol ile çözülebilir.
 - Task 2 inceleme düzeltmeleri: 14 odaklı test geçti; `size < 2`, eşzamanlı ilk yükleme ve hata sonrası yeniden deneme davranışları doğrulandı.
@@ -126,3 +135,8 @@
 - Task 6: 9 focused widget tests and the 80-test full suite passed; `flutter analyze` and `git diff --check` completed cleanly. Splash initialization, explicit retry, one-game gameplay lifetime, once-only completion, retryable save failure, repository-order next-level navigation, final-level Home behavior, and safe invalid-route handling are covered.
 - Task 6 inceleme düzeltmeleri: 22 odaklı widget testi ve 93 testlik tam paket geçti; Hive açılış yeniden denemesi, kilitli/eksik rota koruması, kaydetme kanıtı, 320×568 + 2.0 metin ölçeği ve çift geçiş kilitleri doğrulandı. `flutter analyze` ve `git diff --check` temiz tamamlandı.
 - Task 6 kalan inceleme düzeltmeleri: 24 odaklı widget testi ve 95 testlik tam paket geçti; korunan eski verili `AsyncError` Splash'ta kalıyor ve hızlı bootstrap yeniden denemeleri yalnız tek initializer/repository mount üretiyor. Analyzer ve diff kontrolü temiz tamamlandı.
+- Task 7: Yeni kalıcılık kabul testi mevcut üretim bağlantıları üzerinde ilk çalıştırmada geçti; önceki görevlerdeki birim-seviyesi TDD sonrasında eklenen kabul kapsamıdır ve üretim kodunda düzeltme gerektirmedi.
+- Task 7 kalıcılık akışı: Aynı `InMemoryProgressRepository`, dispose edilen iki ayrı `ProviderScope` arasında Level 1 tamamlamasını, 100 puanı ve Level 2 kilit açmasını korudu; yetkili Level 1 tekrarında puan 100 kaldı.
+- Task 7 kapsam incelemesi: Üç çözülebilir 5×5 asset, tam-grid gerektirmeyen tamamlanma, çakışma/dolu hücre/yabancı uç reddi, restart, tamamlama kilidi, tek-seferlik callback, idempotent puan, çevrimdışı Home → Game → Result → next/home ve pasif fakat kalıcı lives mevcut testlerle doğrulandı. Sonraki faz sistemleri eklenmedi.
+- Task 7 son kapıları: `dart format lib test` 31 dosyayı başarıyla biçimlendirdi; `git diff --check` temizdi; `flutter pub get` başarılıydı; `flutter analyze` sıfır sorun bildirdi; `flutter test` 96/96 geçti; `flutter build apk --debug` exit 0 ile tamamlandı.
+- Task 7 APK: `build/app/outputs/flutter-apk/app-debug.apk` mevcut, 153.135.091 byte.

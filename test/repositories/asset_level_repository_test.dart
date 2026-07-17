@@ -44,9 +44,9 @@ void main() {
           assetPath: 'levels.json',
         );
 
-      final firstLoad = repository.loadLevels();
-      final secondLoad = repository.loadLevels();
-      bundle.release();
+        final firstLoad = repository.loadLevels();
+        final secondLoad = repository.loadLevels();
+        bundle.release();
 
         final results = await Future.wait([firstLoad, secondLoad]);
 
