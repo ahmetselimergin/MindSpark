@@ -4,6 +4,7 @@ import 'package:mind_spark/app/app.dart';
 import 'package:mind_spark/app/routes.dart';
 import 'package:mind_spark/core/theme/app_theme.dart';
 import 'package:mind_spark/core/widgets/spark_trail.dart';
+import 'package:mind_spark/state/app_progress_controller.dart';
 
 final class ResultScreen extends ConsumerStatefulWidget {
   const ResultScreen({
@@ -25,6 +26,10 @@ final class _ResultScreenState extends ConsumerState<ResultScreen> {
   @override
   Widget build(BuildContext context) {
     final levels = ref.watch(levelsProvider).requireValue;
+    final totalScore = ref
+        .watch(appProgressControllerProvider)
+        .requireValue
+        .totalScore;
     final index = levels.indexWhere((level) => level.id == widget.levelId);
     if (index < 0) {
       return const _ResultLoadError();
@@ -81,6 +86,12 @@ final class _ResultScreenState extends ConsumerState<ResultScreen> {
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppColors.frost.withAlpha(180),
                         ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Total Score: $totalScore',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                       SizedBox(height: compact ? 24 : 52),
                       FilledButton(

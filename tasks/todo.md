@@ -96,6 +96,23 @@
 
 ## İnceleme
 
+## Final branch review fixes
+
+- [x] Result ekranı toplam skoru kalıcı provider durumundan göstersin; ilk tamamlama, tekrar ve kompakt widget RED/GREEN kanıtlarını ekle
+- [x] Kalıcı kayıtlar için tipli hata veren atomik katı ayrıştırma sınırı ve tek-seferlik tanı callback'i ekle; RED/GREEN model/Hive kanıtlarını ekle
+- [x] README bozulma politikasını ve izlenen görev inceleme sonuçlarını güncelle
+- [x] Odaklı testler, tam paket, analyzer, debug APK ve diff kontrollerini çalıştır
+- [x] Yok sayılan `.superpowers/sdd/final-review-fix-report.md` raporuna TDD/doğrulama kanıtını yaz ve kapsamlı diff incelemesi yap
+- [x] Yalnız tüm kapılar geçtikten sonra scoped değişiklikleri commit et
+
+### Final branch review fixes — review
+
+- Result toplam skoru route ödülünden hesaplamıyor; izlenen `appProgressControllerProvider` değerini gösteriyor. İlk tamamlama `+100 / Total Score: 100`, tekrar `+0 / Total Score: 100` ve 320×568 + 2.0 metin ölçeği testleri doğrulandı.
+- `PlayerProgress.fromMap` normalizasyonu korundu. Yeni `fromPersistedMap` sınırı şema, alan tipleri, benzersiz pozitif ID'ler, değişmez sahiplik, skor ve kilit tutarlılığını atomik olarak doğruluyor.
+- Hive eksik anahtar için varsayılanı tanısız döndürüyor; bozuk kaydı bir `ProgressFormatException` ve stack ile tam bir kez tanılıyor; gerçek box okuma hatasını yüzeye çıkarıyor.
+- Odaklı model/Hive/widget paketi 38/38, tam paket 103/103 geçti; `flutter analyze` sıfır sorun bildirdi; `git diff --check` temizdi.
+- Debug APK başarıyla üretildi: `build/app/outputs/flutter-apk/app-debug.apk`, 174.329.326 byte (önceki kayıt: 153.135.091 byte).
+
 - Onaylanan oynanabilir çekirdek kapsamı tamamlandı.
 - Task 2: 11 odaklı test geçti; `flutter analyze` sıfır sorunla tamamlandı.
 - Task 2: Seviye 1 yatay satırlar, seviye 2 dikey sütunlar, seviye 3 ise üst satır ve iki serpantin yol ile çözülebilir.

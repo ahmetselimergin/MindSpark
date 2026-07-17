@@ -67,6 +67,65 @@ final class PlayerProgress {
     );
   }
 
+  factory PlayerProgress.fromPersistedMap(Object? record) {
+    if (record is! Map) {
+      throw const ProgressFormatException(
+        field: 'record',
+        message: 'must be a map',
+      );
+    }
+
+    final schemaVersion = _requiredInt(record, 'schemaVersion');
+    if (schemaVersion != 1) {
+      throw const ProgressFormatException(
+        field: 'schemaVersion',
+        message: 'must be exactly 1',
+      );
+    }
+
+    final highestUnlockedLevel = _requiredInt(record, 'highestUnlockedLevel');
+    if (highestUnlockedLevel < 1) {
+      throw const ProgressFormatException(
+        field: 'highestUnlockedLevel',
+        message: 'must be at least 1',
+      );
+    }
+
+    final completedLevelIds = _requiredCompletedLevelIds(record);
+    if (completedLevelIds.any((id) => id > highestUnlockedLevel)) {
+      throw const ProgressFormatException(
+        field: 'completedLevelIds',
+        message: 'cannot contain an ID above highestUnlockedLevel',
+      );
+    }
+
+    final totalScore = _requiredInt(record, 'totalScore');
+    if (totalScore < 0 || totalScore != completedLevelIds.length * 100) {
+      throw const ProgressFormatException(
+        field: 'totalScore',
+        message: 'must equal 100 per completed level',
+      );
+    }
+
+    final lives = _requiredInt(record, 'lives');
+    if (lives < 0) {
+      throw const ProgressFormatException(
+        field: 'lives',
+        message: 'must be nonnegative',
+      );
+    }
+
+    return PlayerProgress(
+      schemaVersion: schemaVersion,
+      highestUnlockedLevel: highestUnlockedLevel,
+      completedLevelIds: completedLevelIds,
+      totalScore: totalScore,
+      lives: lives,
+      soundEnabled: _requiredBool(record, 'soundEnabled'),
+      vibrationEnabled: _requiredBool(record, 'vibrationEnabled'),
+    );
+  }
+
   final int schemaVersion;
   final int highestUnlockedLevel;
   final Set<int> completedLevelIds;
@@ -141,6 +200,59 @@ final class PlayerProgress {
     soundEnabled,
     vibrationEnabled,
   );
+}
+
+final class ProgressFormatException implements Exception {
+  const ProgressFormatException({required this.field, required this.message});
+
+  final String field;
+  final String message;
+
+  @override
+  String toString() => 'ProgressFormatException($field): $message';
+}
+
+int _requiredInt(Map<Object?, Object?> map, String field) {
+  final value = map[field];
+  if (value is! int) {
+    throw ProgressFormatException(field: field, message: 'must be an integer');
+  }
+  return value;
+}
+
+bool _requiredBool(Map<Object?, Object?> map, String field) {
+  final value = map[field];
+  if (value is! bool) {
+    throw ProgressFormatException(field: field, message: 'must be a boolean');
+  }
+  return value;
+}
+
+Set<int> _requiredCompletedLevelIds(Map<Object?, Object?> map) {
+  final value = map['completedLevelIds'];
+  if (value is! List && value is! Set) {
+    throw const ProgressFormatException(
+      field: 'completedLevelIds',
+      message: 'must be a list or set',
+    );
+  }
+
+  final ids = <int>{};
+  for (final id in value as Iterable<Object?>) {
+    if (id is! int || id <= 0) {
+      throw const ProgressFormatException(
+        field: 'completedLevelIds',
+        message: 'must contain only positive integers',
+      );
+    }
+    if (!ids.add(id)) {
+      throw const ProgressFormatException(
+        field: 'completedLevelIds',
+        message: 'must contain unique IDs',
+      );
+    }
+  }
+  return Set<int>.unmodifiable(ids);
 }
 
 int _positiveInt(Object? value, {required int fallback}) {

@@ -58,6 +58,7 @@ void main() {
 
     expect(find.text('LEVEL COMPLETE'), findsOneWidget);
     expect(find.text('+100'), findsOneWidget);
+    expect(find.text('Total Score: 100'), findsOneWidget);
     expect(progress.saved.single.completedLevelIds, {1});
     expect(find.text('NEXT LEVEL'), findsOneWidget);
 
@@ -92,6 +93,7 @@ void main() {
     await _pumpRoute(tester);
 
     expect(find.text('+0'), findsOneWidget);
+    expect(find.text('Total Score: 100'), findsOneWidget);
     expect(progress.saved.single.totalScore, 100);
   });
 
@@ -385,6 +387,7 @@ void main() {
     _useCompactLargeTextView(tester);
     await tester.pump();
 
+    expect(find.text('Total Score: 100'), findsOneWidget);
     expect(find.text('NEXT LEVEL'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

@@ -29,6 +29,126 @@ void main() {
       expect(PlayerProgress.fromMap(progress.toMap()), progress);
     });
 
+    test('strict persisted parsing round-trips and owns completed IDs', () {
+      final record = <Object?, Object?>{
+        'schemaVersion': 1,
+        'highestUnlockedLevel': 3,
+        'completedLevelIds': <int>[1, 2],
+        'totalScore': 200,
+        'lives': 2,
+        'soundEnabled': false,
+        'vibrationEnabled': true,
+      };
+
+      final progress = PlayerProgress.fromPersistedMap(record);
+      (record['completedLevelIds']! as List<int>).add(3);
+
+      expect(progress.completedLevelIds, {1, 2});
+      expect(() => progress.completedLevelIds.add(3), throwsUnsupportedError);
+      expect(PlayerProgress.fromPersistedMap(progress.toMap()), progress);
+    });
+
+    test('strict persisted parsing reports the invalid field', () {
+      expect(
+        () => PlayerProgress.fromPersistedMap({
+          'schemaVersion': 1,
+          'highestUnlockedLevel': true,
+          'completedLevelIds': const <int>[],
+          'totalScore': 0,
+          'lives': 3,
+          'soundEnabled': true,
+          'vibrationEnabled': true,
+        }),
+        throwsA(
+          isA<ProgressFormatException>().having(
+            (error) => error.field,
+            'field',
+            'highestUnlockedLevel',
+          ),
+        ),
+      );
+    });
+
+    test('strict persisted parsing rejects every malformed record shape', () {
+      final valid = <String, Object>{
+        'schemaVersion': 1,
+        'highestUnlockedLevel': 2,
+        'completedLevelIds': const <int>[1],
+        'totalScore': 100,
+        'lives': 3,
+        'soundEnabled': true,
+        'vibrationEnabled': true,
+      };
+      final cases = <(String, Object?)>[
+        ('record', 'not a map'),
+        ('schemaVersion', {...valid, 'schemaVersion': true}),
+        ('schemaVersion', {...valid, 'schemaVersion': 2}),
+        ('highestUnlockedLevel', {...valid, 'highestUnlockedLevel': 0}),
+        ('completedLevelIds', {...valid, 'completedLevelIds': '1'}),
+        (
+          'completedLevelIds',
+          {
+            ...valid,
+            'completedLevelIds': [0],
+          },
+        ),
+        (
+          'completedLevelIds',
+          {
+            ...valid,
+            'completedLevelIds': [1, 1],
+          },
+        ),
+        (
+          'completedLevelIds',
+          {
+            ...valid,
+            'highestUnlockedLevel': 1,
+            'completedLevelIds': [2],
+          },
+        ),
+        ('totalScore', {...valid, 'totalScore': -1}),
+        ('totalScore', {...valid, 'totalScore': 0}),
+        ('lives', {...valid, 'lives': -1}),
+        ('soundEnabled', {...valid, 'soundEnabled': 1}),
+        ('vibrationEnabled', {...valid, 'vibrationEnabled': null}),
+      ];
+
+      for (final (field, record) in cases) {
+        expect(
+          () => PlayerProgress.fromPersistedMap(record),
+          throwsA(
+            isA<ProgressFormatException>().having(
+              (error) => error.field,
+              'field',
+              field,
+            ),
+          ),
+          reason: 'record: $record',
+        );
+      }
+    });
+
+    test('strict persisted parsing accepts and owns a set representation', () {
+      final callerOwnedIds = <int>{1};
+      final progress = PlayerProgress.fromPersistedMap({
+        'schemaVersion': 1,
+        'highestUnlockedLevel': 1,
+        'completedLevelIds': callerOwnedIds,
+        'totalScore': 100,
+        'lives': 0,
+        'soundEnabled': true,
+        'vibrationEnabled': false,
+      });
+
+      callerOwnedIds
+        ..clear()
+        ..add(2);
+
+      expect(progress.completedLevelIds, {1});
+      expect(progress.lives, 0);
+    });
+
     test('normalizes wrong, corrupt, and negative map values', () {
       final progress = PlayerProgress.fromMap({
         'schemaVersion': -2,

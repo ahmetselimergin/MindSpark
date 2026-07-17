@@ -17,6 +17,12 @@ and the complete Splash → Home → Game → Result → next/home flow.
 The bundled levels and gameplay loop work fully offline. Dependency resolution
 and the first Android toolchain setup can still require network access.
 
+Hive progress is loaded as one atomic version-1 record. A missing record starts
+with defaults; a malformed record, unsupported schema, or inconsistent
+score/unlock data is diagnosed through the repository callback and resets the
+whole record to defaults rather than salvaging individual fields. Storage read
+failures are surfaced instead of being treated as data corruption.
+
 ## Prerequisites
 
 - Flutter SDK with Dart 3.12.2 or newer in the supported `^3.12.2` range

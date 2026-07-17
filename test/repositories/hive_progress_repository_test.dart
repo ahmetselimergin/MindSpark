@@ -10,6 +10,8 @@ void main() {
     Directory? temporaryDirectory;
     Box<Object?>? box;
     HiveProgressRepository? repository;
+    late List<ProgressFormatException> diagnostics;
+    late List<StackTrace> diagnosticStacks;
 
     setUp(() async {
       temporaryDirectory = null;
@@ -20,7 +22,15 @@ void main() {
       );
       Hive.init(temporaryDirectory!.path);
       box = await Hive.openBox<Object?>('progress');
-      repository = HiveProgressRepository(box!);
+      diagnostics = [];
+      diagnosticStacks = [];
+      repository = HiveProgressRepository(
+        box!,
+        onDiagnostic: (cause, stackTrace) {
+          diagnostics.add(cause);
+          diagnosticStacks.add(stackTrace);
+        },
+      );
     });
 
     tearDown(() async {
@@ -39,6 +49,7 @@ void main() {
 
     test('returns initial defaults when the record is missing', () async {
       expect(await repository!.load(), const PlayerProgress.initial());
+      expect(diagnostics, isEmpty);
     });
 
     test('saves and loads progress under the single record key', () async {
@@ -56,43 +67,86 @@ void main() {
 
       expect(box!.keys, ['playerProgress']);
       expect(await repository!.load(), progress);
+      expect(diagnostics, isEmpty);
     });
 
-    test('returns initial defaults for corrupt records', () async {
-      for (final corruptRecord in <Object?>[
-        'not a map',
-        42,
-        <Object?>['not', 'a', 'record'],
-      ]) {
-        await box!.put('playerProgress', corruptRecord);
+    test('rejects a non-map record atomically and diagnoses once', () async {
+      await box!.put('playerProgress', 'not a map');
 
-        expect(
-          await repository!.load(),
-          const PlayerProgress.initial(),
-          reason: 'record: $corruptRecord',
-        );
+      expect(await repository!.load(), const PlayerProgress.initial());
+      expect(diagnostics, hasLength(1));
+      expect(diagnostics.single.field, 'record');
+      expect(diagnosticStacks.single, isNot(StackTrace.empty));
+    });
+
+    test('rejects a malformed field without partial salvage', () async {
+      await box!.put('playerProgress', <Object?, Object?>{
+        'schemaVersion': 1,
+        'highestUnlockedLevel': '2',
+        'completedLevelIds': const <int>[1],
+        'totalScore': 100,
+        'lives': 3,
+        'soundEnabled': true,
+        'vibrationEnabled': true,
+      });
+
+      expect(await repository!.load(), const PlayerProgress.initial());
+      expect(diagnostics.single.field, 'highestUnlockedLevel');
+    });
+
+    test('rejects unsupported persisted schema versions', () async {
+      await _putRecord(box!, schemaVersion: 2);
+
+      expect(await repository!.load(), const PlayerProgress.initial());
+      expect(diagnostics.single.field, 'schemaVersion');
+    });
+
+    test('rejects inconsistent IDs, score, and unlock atomically', () async {
+      final invalidRecords = <Map<String, Object>>[
+        _record(completedLevelIds: const [1, 1], totalScore: 200),
+        _record(completedLevelIds: const [1], totalScore: 0),
+        _record(
+          highestUnlockedLevel: 1,
+          completedLevelIds: const [2],
+          totalScore: 100,
+        ),
+      ];
+
+      for (final record in invalidRecords) {
+        diagnostics.clear();
+        await box!.put('playerProgress', record);
+
+        expect(await repository!.load(), const PlayerProgress.initial());
+        expect(diagnostics, hasLength(1), reason: 'record: $record');
       }
     });
 
-    test('normalizes corrupt fields without throwing', () async {
-      await box!.put('playerProgress', <Object?, Object?>{
-        'highestUnlockedLevel': -3,
-        'completedLevelIds': [1, 'bad'],
-        'totalScore': -100,
-      });
+    test(
+      'surfaces box read failures instead of calling corruption diagnostics',
+      () async {
+        await box!.close();
 
-      expect(
-        await repository!.load(),
-        PlayerProgress(
-          schemaVersion: 1,
-          highestUnlockedLevel: 1,
-          completedLevelIds: {1},
-          totalScore: 0,
-          lives: 3,
-          soundEnabled: true,
-          vibrationEnabled: true,
-        ),
-      );
-    });
+        await expectLater(repository!.load(), throwsA(isA<HiveError>()));
+        expect(diagnostics, isEmpty);
+      },
+    );
   });
 }
+
+Future<void> _putRecord(Box<Object?> box, {Object schemaVersion = 1}) =>
+    box.put('playerProgress', _record(schemaVersion: schemaVersion));
+
+Map<String, Object> _record({
+  Object schemaVersion = 1,
+  Object highestUnlockedLevel = 1,
+  Object completedLevelIds = const <int>[],
+  Object totalScore = 0,
+}) => <String, Object>{
+  'schemaVersion': schemaVersion,
+  'highestUnlockedLevel': highestUnlockedLevel,
+  'completedLevelIds': completedLevelIds,
+  'totalScore': totalScore,
+  'lives': 3,
+  'soundEnabled': true,
+  'vibrationEnabled': true,
+};
