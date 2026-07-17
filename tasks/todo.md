@@ -111,7 +111,7 @@
 - `PlayerProgress.fromMap` normalizasyonu korundu. Yeni `fromPersistedMap` sınırı şema, alan tipleri, benzersiz pozitif ID'ler, değişmez sahiplik, skor ve kilit tutarlılığını atomik olarak doğruluyor.
 - Hive eksik anahtar için varsayılanı tanısız döndürüyor; bozuk kaydı bir `ProgressFormatException` ve stack ile tam bir kez tanılıyor; gerçek box okuma hatasını yüzeye çıkarıyor.
 - Odaklı model/Hive/widget paketi 38/38, tam paket 103/103 geçti; `flutter analyze` sıfır sorun bildirdi; `git diff --check` temizdi.
-- Debug APK başarıyla üretildi: `build/app/outputs/flutter-apk/app-debug.apk`, 174.329.326 byte (önceki kayıt: 153.135.091 byte).
+- `main` üzerinde temiz debug APK başarıyla yeniden üretildi: `build/app/outputs/flutter-apk/app-debug.apk`, 153.137.035 byte. Worktree'de görülen 174.329.326 byte ölçümünün build-cache/toolchain durumuna bağlı olduğu doğrulandı.
 
 - Onaylanan oynanabilir çekirdek kapsamı tamamlandı.
 - Task 2: 11 odaklı test geçti; `flutter analyze` sıfır sorunla tamamlandı.
