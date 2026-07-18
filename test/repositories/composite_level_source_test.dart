@@ -38,6 +38,22 @@ void main() {
 
   test('rejects non-positive ids', () async {
     final source = CompositeLevelSource(repository: _FakeRepo());
-    expect(() => source.levelById(0), throwsArgumentError);
+    await expectLater(source.levelById(0), throwsArgumentError);
+  });
+
+  test('routes id == curatedMax to the repository', () async {
+    final repo = _FakeRepo();
+    final source = CompositeLevelSource(repository: repo, curatedMax: 10);
+    final level = await source.levelById(10);
+    expect(level.id, 10);
+    expect(repo.requestedId, 10);
+  });
+
+  test('routes id == curatedMax + 1 to the generator', () async {
+    final repo = _FakeRepo();
+    final source = CompositeLevelSource(repository: repo, curatedMax: 10);
+    final level = await source.levelById(11);
+    expect(level.id, 11);
+    expect(repo.requestedId, isNull);
   });
 }
