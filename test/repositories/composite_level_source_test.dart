@@ -1,0 +1,43 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mind_spark/models/level_model.dart';
+import 'package:mind_spark/repositories/composite_level_source.dart';
+import 'package:mind_spark/repositories/level_repository.dart';
+
+class _FakeRepo implements LevelRepository {
+  int? requestedId;
+  @override
+  Future<LevelModel> levelById(int id) async {
+    requestedId = id;
+    return LevelModel(id: id, size: 5, points: const [
+      GridPoint(x: 0, y: 0, color: 'red'),
+      GridPoint(x: 4, y: 4, color: 'red'),
+    ]);
+  }
+
+  @override
+  Future<List<LevelModel>> loadLevels() async => const [];
+}
+
+void main() {
+  test('serves ids <= curatedMax from the repository', () async {
+    final repo = _FakeRepo();
+    final source = CompositeLevelSource(repository: repo, curatedMax: 10);
+    final level = await source.levelById(3);
+    expect(level.id, 3);
+    expect(repo.requestedId, 3);
+  });
+
+  test('serves ids > curatedMax from the generator', () async {
+    final repo = _FakeRepo();
+    final source = CompositeLevelSource(repository: repo, curatedMax: 10);
+    final level = await source.levelById(25);
+    expect(level.id, 25);
+    expect(repo.requestedId, isNull); // repository not touched
+    expect(level.size, 6); // difficulty band for id 25
+  });
+
+  test('rejects non-positive ids', () async {
+    final source = CompositeLevelSource(repository: _FakeRepo());
+    expect(() => source.levelById(0), throwsArgumentError);
+  });
+}
