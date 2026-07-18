@@ -209,12 +209,28 @@ void main() {
   });
 
   group('PuzzleSession completion', () {
+    test('stays incomplete until every cell is covered, not just paired', () {
+      var completionCount = 0;
+      final session = PuzzleSession(
+        level: _level,
+        onCompleted: () => completionCount++,
+      );
+
+      // Both pairs connect along the top and bottom rows, but the middle row
+      // of the 3x3 board is left empty.
+      _connectRed(session);
+      _connectBlue(session);
+
+      expect(session.isComplete, isFalse);
+      expect(completionCount, 0);
+    });
+
     test('locks input before emitting completion exactly once', () {
       late PuzzleSession session;
       var completionCount = 0;
       var inputWasLockedDuringCallback = false;
       session = PuzzleSession(
-        level: _level,
+        level: _fillLevel,
         onCompleted: () {
           completionCount++;
           inputWasLockedDuringCallback = !session.startPath(
@@ -222,15 +238,14 @@ void main() {
           );
         },
       );
-      _connectRed(session);
 
-      _connectBlue(session);
+      _fillBoard(session);
 
       expect(session.isComplete, isTrue);
       expect(session.snapshot.isComplete, isTrue);
       expect(inputWasLockedDuringCallback, isTrue);
       expect(completionCount, 1);
-      expect(session.extendPath(const GridPosition(1, 2)), isFalse);
+      expect(session.extendPath(const GridPosition(1, 1)), isFalse);
       session.endPath();
       expect(session.startPath(const GridPosition(0, 0)), isFalse);
       expect(completionCount, 1);
@@ -239,20 +254,15 @@ void main() {
     test('restart unlocks input and permits one new completion emission', () {
       var completionCount = 0;
       final session = PuzzleSession(
-        level: _level,
+        level: _fillLevel,
         onCompleted: () => completionCount++,
       );
-      _connectRed(session);
-      _connectBlue(session);
+      _fillBoard(session);
       expect(completionCount, 1);
 
       session.restart();
 
-      expect(session.startPath(const GridPosition(0, 0)), isTrue);
-      session.extendPath(const GridPosition(1, 0));
-      session.extendPath(const GridPosition(2, 0));
-      session.endPath();
-      _connectBlue(session);
+      _fillBoard(session);
       expect(session.isComplete, isTrue);
       expect(completionCount, 2);
       expect(session.startPath(const GridPosition(0, 0)), isFalse);
@@ -274,6 +284,29 @@ void _connectBlue(PuzzleSession session) {
   session.extendPath(const GridPosition(2, 2));
   session.endPath();
 }
+
+void _fillBoard(PuzzleSession session) {
+  // Fills the 2x2 _fillLevel: red across the top row, blue across the bottom.
+  session.startPath(const GridPosition(0, 0));
+  session.extendPath(const GridPosition(1, 0));
+  session.endPath();
+  session.startPath(const GridPosition(0, 1));
+  session.extendPath(const GridPosition(1, 1));
+  session.endPath();
+}
+
+// A 2x2 board whose direct pair connections cover every cell, so connecting
+// both pairs also satisfies the full-coverage completion rule.
+const _fillLevel = LevelModel(
+  id: 2,
+  size: 2,
+  points: [
+    GridPoint(x: 0, y: 0, color: 'red'),
+    GridPoint(x: 1, y: 0, color: 'red'),
+    GridPoint(x: 0, y: 1, color: 'blue'),
+    GridPoint(x: 1, y: 1, color: 'blue'),
+  ],
+);
 
 const _level = LevelModel(
   id: 1,

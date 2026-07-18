@@ -2,12 +2,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mind_spark/game/generation/level_difficulty.dart';
 
 void main() {
-  test('matches the approved ramp-then-plateau bands', () {
-    expect(difficultyForLevel(11), const LevelDifficulty(size: 5, colors: 4, minLen: 3));
-    expect(difficultyForLevel(19), const LevelDifficulty(size: 6, colors: 5, minLen: 3));
-    expect(difficultyForLevel(23), const LevelDifficulty(size: 6, colors: 5, minLen: 4));
-    expect(difficultyForLevel(27), const LevelDifficulty(size: 7, colors: 6, minLen: 4));
-    expect(difficultyForLevel(35), const LevelDifficulty(size: 8, colors: 6, minLen: 5));
+  test('continues from the curated set then plateaus at 8x8', () {
+    // Level 11 must not be easier than curated level 10 (7x7, 6 colours).
+    expect(difficultyForLevel(11), const LevelDifficulty(size: 7, colors: 6, minLen: 5));
+    expect(difficultyForLevel(18), const LevelDifficulty(size: 7, colors: 6, minLen: 5));
+    expect(difficultyForLevel(19), const LevelDifficulty(size: 8, colors: 6, minLen: 6));
     expect(difficultyForLevel(47), const LevelDifficulty(size: 8, colors: 6, minLen: 6));
   });
 

@@ -33,7 +33,7 @@ void main() {
     final level = await source.levelById(25);
     expect(level.id, 25);
     expect(repo.requestedId, isNull); // repository not touched
-    expect(level.size, 6); // difficulty band for id 25
+    expect(level.size, 8); // difficulty band for id 25 (plateau)
   });
 
   test('rejects non-positive ids', () async {

@@ -46,7 +46,13 @@ final class PuzzleSession {
 
   bool get isComplete =>
       _paths.length == _endpointsByColor.length &&
-      _paths.values.every((path) => path.connected);
+      _paths.values.every((path) => path.connected) &&
+      _coveredCellCount == _level.size * _level.size;
+
+  /// Total cells occupied across all paths. Paths never overlap (see
+  /// [_isOccupied]), so this equals the number of distinct covered cells.
+  int get _coveredCellCount =>
+      _paths.values.fold<int>(0, (sum, path) => sum + path.cells.length);
 
   bool startPath(GridPosition position) {
     if (_inputLocked || _activeColor != null || !_isInBounds(position)) {

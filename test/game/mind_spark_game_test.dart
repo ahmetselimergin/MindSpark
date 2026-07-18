@@ -311,7 +311,7 @@ void main() {
     'restart restores the initial snapshot and enables a new callback cycle',
     () {
       var completions = 0;
-      final game = _game(onCompleted: () => completions++)
+      final game = _game(level: _fillLevel(), onCompleted: () => completions++)
         ..onGameResize(Vector2.all(500));
 
       _completeLevel(game);
@@ -349,6 +349,25 @@ LevelModel _level() => const LevelModel(
   points: [
     GridPoint(x: 0, y: 0, color: 'red'),
     GridPoint(x: 4, y: 0, color: 'red'),
+    GridPoint(x: 0, y: 4, color: 'blue'),
+    GridPoint(x: 4, y: 4, color: 'blue'),
+  ],
+);
+
+// A 5x5 board with one colour per row, so filling each row left-to-right
+// covers every cell and satisfies the full-coverage completion rule.
+LevelModel _fillLevel() => const LevelModel(
+  id: 5,
+  size: 5,
+  points: [
+    GridPoint(x: 0, y: 0, color: 'red'),
+    GridPoint(x: 4, y: 0, color: 'red'),
+    GridPoint(x: 0, y: 1, color: 'orange'),
+    GridPoint(x: 4, y: 1, color: 'orange'),
+    GridPoint(x: 0, y: 2, color: 'yellow'),
+    GridPoint(x: 4, y: 2, color: 'yellow'),
+    GridPoint(x: 0, y: 3, color: 'green'),
+    GridPoint(x: 4, y: 3, color: 'green'),
     GridPoint(x: 0, y: 4, color: 'blue'),
     GridPoint(x: 4, y: 4, color: 'blue'),
   ],
@@ -434,10 +453,10 @@ DragUpdateEvent _dragUpdate(
 }
 
 void _completeLevel(MindSparkGame game) {
-  game.handlePointerStart(_cellCenter(0, 0));
-  game.handlePointerUpdate(_cellCenter(4, 0));
-  game.handlePointerEnd();
-  game.handlePointerStart(_cellCenter(0, 4));
-  game.handlePointerUpdate(_cellCenter(4, 4));
-  game.handlePointerEnd();
+  // Fill every row of _fillLevel left-to-right, covering the whole board.
+  for (var row = 0; row < 5; row++) {
+    game.handlePointerStart(_cellCenter(0, row));
+    game.handlePointerUpdate(_cellCenter(4, row));
+    game.handlePointerEnd();
+  }
 }
