@@ -18,20 +18,20 @@ final class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final levels = ref.watch(levelsProvider).requireValue;
     final progress = ref.watch(appProgressControllerProvider).requireValue;
-    final currentLevelIndex = levels.indexWhere(
-      (level) => level.id == progress.highestUnlockedLevel,
-    );
-    if (currentLevelIndex < 0) {
+    final levelState = ref.watch(levelByIdProvider(progress.highestUnlockedLevel));
+    final currentLevel = levelState.value;
+    if (levelState.hasError) {
       return _HomeContentError(
         onRetry: () {
-          ref.invalidate(levelsProvider);
+          ref.invalidate(levelByIdProvider(progress.highestUnlockedLevel));
           ref.invalidate(appProgressControllerProvider);
         },
       );
     }
-    final currentLevel = levels[currentLevelIndex];
+    if (currentLevel == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Scaffold(
       body: SafeArea(

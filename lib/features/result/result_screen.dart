@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mind_spark/app/app.dart';
 import 'package:mind_spark/app/routes.dart';
 import 'package:mind_spark/core/theme/app_theme.dart';
 import 'package:mind_spark/core/widgets/spark_trail.dart';
@@ -25,16 +24,11 @@ final class _ResultScreenState extends ConsumerState<ResultScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final levels = ref.watch(levelsProvider).requireValue;
     final totalScore = ref
         .watch(appProgressControllerProvider)
         .requireValue
         .totalScore;
-    final index = levels.indexWhere((level) => level.id == widget.levelId);
-    if (index < 0) {
-      return const _ResultLoadError();
-    }
-    final nextLevelId = index + 1 < levels.length ? levels[index + 1].id : null;
+    final nextLevelId = widget.levelId + 1; // endless
 
     return Scaffold(
       body: SafeArea(
@@ -98,9 +92,18 @@ final class _ResultScreenState extends ConsumerState<ResultScreen> {
                         onPressed: _navigating
                             ? null
                             : () => _navigate(nextLevelId),
-                        child: Text(
-                          nextLevelId == null ? 'HOME' : 'NEXT LEVEL',
-                        ),
+                        child: const Text('NEXT LEVEL'),
+                      ),
+                      const SizedBox(height: 12),
+                      TextButton(
+                        onPressed: _navigating
+                            ? null
+                            : () => Navigator.of(context)
+                                  .pushNamedAndRemoveUntil(
+                                    AppRoutes.home,
+                                    (_) => false,
+                                  ),
+                        child: const Text('HOME'),
                       ),
                     ],
                   ),
@@ -113,50 +116,14 @@ final class _ResultScreenState extends ConsumerState<ResultScreen> {
     );
   }
 
-  void _navigate(int? nextLevelId) {
+  void _navigate(int nextLevelId) {
     if (_navigating) {
       return;
     }
     setState(() => _navigating = true);
-    if (nextLevelId == null) {
-      Navigator.of(
-        context,
-      ).pushNamedAndRemoveUntil(AppRoutes.home, (_) => false);
-    } else {
-      Navigator.of(context).pushReplacementNamed(
-        AppRoutes.gameplay,
-        arguments: GameplayRouteArgs(nextLevelId),
-      );
-    }
-  }
-}
-
-final class _ResultLoadError extends StatelessWidget {
-  const _ResultLoadError();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('This result could not be opened.'),
-                const SizedBox(height: 20),
-                FilledButton(
-                  onPressed: () => Navigator.of(
-                    context,
-                  ).pushNamedAndRemoveUntil(AppRoutes.home, (_) => false),
-                  child: const Text('HOME'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    Navigator.of(context).pushReplacementNamed(
+      AppRoutes.gameplay,
+      arguments: GameplayRouteArgs(nextLevelId),
     );
   }
 }

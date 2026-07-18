@@ -8,21 +8,22 @@ import 'package:mind_spark/features/result/result_screen.dart';
 import 'package:mind_spark/features/splash/splash_screen.dart';
 import 'package:mind_spark/models/level_model.dart';
 import 'package:mind_spark/repositories/asset_level_repository.dart';
+import 'package:mind_spark/repositories/composite_level_source.dart';
 import 'package:mind_spark/repositories/level_repository.dart';
+import 'package:mind_spark/repositories/level_source.dart';
 
 final levelRepositoryProvider = Provider<LevelRepository>(
   (ref) => AssetLevelRepository(),
 );
 
-final levelsProvider = FutureProvider<List<LevelModel>>((ref) async {
-  final levels = await ref.read(levelRepositoryProvider).loadLevels();
-  if (levels.isEmpty) {
-    throw const LevelLoadException('No playable levels were found');
-  }
-  return List<LevelModel>.unmodifiable(
-    [...levels]..sort((first, second) => first.id.compareTo(second.id)),
-  );
-}, retry: (_, _) => null);
+final levelSourceProvider = Provider<LevelSource>(
+  (ref) => CompositeLevelSource(repository: ref.read(levelRepositoryProvider)),
+);
+
+final levelByIdProvider = FutureProvider.family<LevelModel, int>(
+  (ref, id) => ref.read(levelSourceProvider).levelById(id),
+  retry: (_, _) => null,
+);
 
 final class MindSparkApp extends StatelessWidget {
   const MindSparkApp({super.key, this.navigatorKey});

@@ -41,33 +41,34 @@ void main() {
     expect(harness.games, hasLength(1));
   });
 
-  testWidgets('first completion awards 100 and next follows repository order', (
-    tester,
-  ) async {
-    final harness = _GameHarness();
-    final progress = _RecordingProgressRepository();
-    await tester.pumpWidget(
-      _testApp(harness: harness, progressRepository: progress),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('PLAY'));
-    await _pumpRoute(tester);
+  testWidgets(
+    'first completion awards 100 and next opens the following level id',
+    (tester) async {
+      final harness = _GameHarness();
+      final progress = _RecordingProgressRepository();
+      await tester.pumpWidget(
+        _testApp(harness: harness, progressRepository: progress),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('PLAY'));
+      await _pumpRoute(tester);
 
-    harness.completeLatest();
-    await _pumpRoute(tester);
+      harness.completeLatest();
+      await _pumpRoute(tester);
 
-    expect(find.text('LEVEL COMPLETE'), findsOneWidget);
-    expect(find.text('+100'), findsOneWidget);
-    expect(find.text('Total Score: 100'), findsOneWidget);
-    expect(progress.saved.single.completedLevelIds, {1});
-    expect(find.text('NEXT LEVEL'), findsOneWidget);
+      expect(find.text('LEVEL COMPLETE'), findsOneWidget);
+      expect(find.text('+100'), findsOneWidget);
+      expect(find.text('Total Score: 100'), findsOneWidget);
+      expect(progress.saved.single.completedLevelIds, {1});
+      expect(find.text('NEXT LEVEL'), findsOneWidget);
 
-    await tester.tap(find.text('NEXT LEVEL'));
-    await _pumpRoute(tester);
+      await tester.tap(find.text('NEXT LEVEL'));
+      await _pumpRoute(tester);
 
-    expect(find.text('Level 5'), findsOneWidget);
-    expect(harness.games, hasLength(2));
-  });
+      expect(find.text('Level 2'), findsOneWidget);
+      expect(harness.games, hasLength(2));
+    },
+  );
 
   testWidgets('replaying a completed level awards zero', (tester) async {
     final harness = _GameHarness();
@@ -221,38 +222,41 @@ void main() {
     expect(progress.attempts, hasLength(1));
   });
 
-  testWidgets('finishing the final repository level returns home', (
-    tester,
-  ) async {
-    final harness = _GameHarness();
-    final progress = _RecordingProgressRepository(
-      PlayerProgress(
-        schemaVersion: 1,
-        highestUnlockedLevel: 5,
-        completedLevelIds: {1},
-        totalScore: 100,
-        lives: 3,
-        soundEnabled: true,
-        vibrationEnabled: true,
-      ),
-    );
-    await tester.pumpWidget(
-      _testApp(harness: harness, progressRepository: progress),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('PLAY'));
-    await _pumpRoute(tester);
+  testWidgets(
+    'result screen always offers NEXT LEVEL plus a HOME shortcut',
+    (tester) async {
+      final harness = _GameHarness();
+      final progress = _RecordingProgressRepository(
+        PlayerProgress(
+          schemaVersion: 1,
+          highestUnlockedLevel: 5,
+          completedLevelIds: {1},
+          totalScore: 100,
+          lives: 3,
+          soundEnabled: true,
+          vibrationEnabled: true,
+        ),
+      );
+      await tester.pumpWidget(
+        _testApp(harness: harness, progressRepository: progress),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('PLAY'));
+      await _pumpRoute(tester);
 
-    harness.completeLatest();
-    await _pumpRoute(tester);
+      harness.completeLatest();
+      await _pumpRoute(tester);
 
-    expect(find.text('HOME'), findsOneWidget);
-    expect(find.text('NEXT LEVEL'), findsNothing);
+      // Endless progression: completing a level always offers NEXT LEVEL,
+      // plus a secondary HOME shortcut back to the hub.
+      expect(find.text('NEXT LEVEL'), findsOneWidget);
+      expect(find.text('HOME'), findsOneWidget);
 
-    await tester.tap(find.text('HOME'));
-    await tester.pumpAndSettle();
-    expect(find.text('Best Score: 200'), findsOneWidget);
-  });
+      await tester.tap(find.text('HOME'));
+      await tester.pumpAndSettle();
+      expect(find.text('Best Score: 200'), findsOneWidget);
+    },
+  );
 
   testWidgets('invalid gameplay arguments show a safe error page', (
     tester,
@@ -308,49 +312,66 @@ void main() {
     expect(harness.games, isEmpty);
   });
 
-  testWidgets('home reports saved highest level missing from assets', (
-    tester,
-  ) async {
-    final progress = _RecordingProgressRepository(
-      PlayerProgress(
-        schemaVersion: 1,
-        highestUnlockedLevel: 3,
-        completedLevelIds: const {1},
-        totalScore: 100,
-        lives: 3,
-        soundEnabled: true,
-        vibrationEnabled: true,
-      ),
-    );
-    await tester.pumpWidget(
-      _testApp(harness: _GameHarness(), progressRepository: progress),
-    );
-    await tester.pumpAndSettle();
+  testWidgets(
+    'splash surfaces a recoverable error when saved progress references a '
+    'level missing from the repository',
+    (tester) async {
+      // Splash now prefetches the specific current level (by id) before
+      // gating navigation to Home, so a highestUnlockedLevel that the
+      // curated repository can't serve is now caught here instead of on
+      // Home (Home only ever renders once its own level fetch already
+      // succeeded during this same gate).
+      final progress = _RecordingProgressRepository(
+        PlayerProgress(
+          schemaVersion: 1,
+          highestUnlockedLevel: 3,
+          completedLevelIds: const {1},
+          totalScore: 100,
+          lives: 3,
+          soundEnabled: true,
+          vibrationEnabled: true,
+        ),
+      );
+      await tester.pumpWidget(
+        _testApp(harness: _GameHarness(), progressRepository: progress),
+      );
+      await tester.pumpAndSettle();
 
-    expect(
-      find.text('Saved progress does not match the available levels.'),
-      findsOneWidget,
-    );
-    expect(find.text('RETRY'), findsOneWidget);
-    expect(find.text('PLAY'), findsNothing);
-  });
+      expect(find.text('Levels could not be loaded.'), findsOneWidget);
+      expect(find.text('RETRY'), findsOneWidget);
+      expect(find.text('PLAY'), findsNothing);
+    },
+  );
 
-  testWidgets('missing result level offers a Home action', (tester) async {
-    final navigatorKey = GlobalKey<NavigatorState>();
-    await tester.pumpWidget(
-      _testApp(harness: _GameHarness(), navigatorKey: navigatorKey),
-    );
-    await tester.pumpAndSettle();
+  testWidgets(
+    'result screen renders for any level id and HOME returns to the hub',
+    (tester) async {
+      // Endless progression: Result no longer validates levelId against a
+      // repository list (any positive id is a legitimate completed level),
+      // so this now exercises the out-of-range id rendering successfully
+      // and the secondary HOME shortcut, rather than an error page.
+      final navigatorKey = GlobalKey<NavigatorState>();
+      await tester.pumpWidget(
+        _testApp(harness: _GameHarness(), navigatorKey: navigatorKey),
+      );
+      await tester.pumpAndSettle();
 
-    navigatorKey.currentState!.pushNamed(
-      AppRoutes.result,
-      arguments: const ResultRouteArgs(levelId: 99, awardedScore: 100),
-    );
-    await _pumpRoute(tester);
+      navigatorKey.currentState!.pushNamed(
+        AppRoutes.result,
+        arguments: const ResultRouteArgs(levelId: 99, awardedScore: 100),
+      );
+      await _pumpRoute(tester);
 
-    expect(find.text('This result could not be opened.'), findsOneWidget);
-    expect(find.text('HOME'), findsOneWidget);
-  });
+      expect(find.text('LEVEL COMPLETE'), findsOneWidget);
+      expect(find.text('NEXT LEVEL'), findsOneWidget);
+      expect(find.text('HOME'), findsOneWidget);
+
+      await tester.tap(find.text('HOME'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('PLAY'), findsOneWidget);
+    },
+  );
 
   testWidgets('Home fits 320x568 at 2x text scale', (tester) async {
     _useCompactLargeTextView(tester);
@@ -486,12 +507,32 @@ final class _TestLevelRepository implements LevelRepository {
         GridPoint(x: 1, y: 1, color: 'blue'),
       ],
     ),
+    // Endless progression opens the next sequential id, so the fake repo
+    // must serve id 2 (the level after completing level 1).
+    const LevelModel(
+      id: 2,
+      size: 2,
+      points: [
+        GridPoint(x: 0, y: 1, color: 'yellow'),
+        GridPoint(x: 1, y: 0, color: 'yellow'),
+      ],
+    ),
     const LevelModel(
       id: 5,
       size: 2,
       points: [
         GridPoint(x: 0, y: 1, color: 'yellow'),
         GridPoint(x: 1, y: 0, color: 'yellow'),
+      ],
+    ),
+    // Serves id 6, which becomes the highest unlocked level after
+    // completing level 5 in the "endless" tests below.
+    const LevelModel(
+      id: 6,
+      size: 2,
+      points: [
+        GridPoint(x: 0, y: 0, color: 'green'),
+        GridPoint(x: 1, y: 1, color: 'green'),
       ],
     ),
   ];

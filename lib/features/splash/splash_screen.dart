@@ -18,8 +18,9 @@ final class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final levels = ref.watch(levelsProvider);
     final progress = ref.watch(appProgressControllerProvider);
+    final currentId = progress.value?.highestUnlockedLevel ?? 1;
+    final levels = ref.watch(levelByIdProvider(currentId));
 
     if (_isReady(levels) && _isReady(progress) && !_navigationScheduled) {
       _navigationScheduled = true;
@@ -27,7 +28,7 @@ final class _SplashScreenState extends ConsumerState<SplashScreen> {
         if (!mounted) {
           return;
         }
-        final currentLevels = ref.read(levelsProvider);
+        final currentLevels = ref.read(levelByIdProvider(currentId));
         final currentProgress = ref.read(appProgressControllerProvider);
         if (_isReady(currentLevels) && _isReady(currentProgress)) {
           Navigator.of(context).pushReplacementNamed(AppRoutes.home);
@@ -80,7 +81,10 @@ final class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   void _retry() {
     _navigationScheduled = false;
-    ref.invalidate(levelsProvider);
+    final id =
+        ref.read(appProgressControllerProvider).value?.highestUnlockedLevel ??
+        1;
+    ref.invalidate(levelByIdProvider(id));
     ref.invalidate(appProgressControllerProvider);
   }
 }

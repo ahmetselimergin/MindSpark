@@ -37,33 +37,25 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final levelsState = ref.watch(levelsProvider);
     final progressState = ref.watch(appProgressControllerProvider);
+    final levelState = ref.watch(levelByIdProvider(widget.levelId));
     final existingGame = _game;
     if (existingGame != null) {
       return _buildGame(existingGame);
     }
-    if (levelsState.hasError || progressState.hasError) {
+    if (levelState.hasError || progressState.hasError) {
       return const _GameplayLoadError();
     }
-    final levels = levelsState.value;
+    final level = levelState.value;
     final progress = progressState.value;
-    if (levels == null || progress == null) {
+    if (level == null || progress == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    final currentIndex = levels.indexWhere(
-      (level) => level.id == widget.levelId,
-    );
-    final highestUnlockedIndex = levels.indexWhere(
-      (level) => level.id == progress.highestUnlockedLevel,
-    );
-    if (currentIndex < 0 ||
-        highestUnlockedIndex < 0 ||
-        currentIndex > highestUnlockedIndex) {
+    if (widget.levelId < 1 || widget.levelId > progress.highestUnlockedLevel) {
       return const _GameplayLoadError();
     }
     final game = _game = ref.read(mindSparkGameFactoryProvider)(
-      levels[currentIndex],
+      level,
       _handleCompletion,
     );
     return _buildGame(game);
@@ -87,7 +79,6 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen> {
     }
     _completionHandled = true;
 
-    final levels = ref.read(levelsProvider).requireValue;
     final before = ref.read(appProgressControllerProvider).value;
     if (before == null) {
       if (mounted) {
@@ -98,7 +89,7 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen> {
       }
       return;
     }
-    final nextLevelId = _nextLevelId(levels, widget.levelId);
+    final nextLevelId = widget.levelId + 1; // endless: always a next level
 
     await ref
         .read(appProgressControllerProvider.notifier)
@@ -239,6 +230,13 @@ final class _GameplayView extends StatelessWidget {
                       context,
                     ).textTheme.headlineMedium?.copyWith(fontSize: 28),
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.home_rounded),
+                    color: AppColors.frost,
+                    onPressed: () => Navigator.of(
+                      context,
+                    ).pushNamedAndRemoveUntil(AppRoutes.home, (_) => false),
+                  ),
                   TextButton(
                     onPressed: onRestart,
                     child: const Text('RESTART'),
@@ -346,9 +344,4 @@ final class _GameplayLoadError extends StatelessWidget {
       ),
     );
   }
-}
-
-int? _nextLevelId(List<LevelModel> levels, int id) {
-  final index = levels.indexWhere((level) => level.id == id);
-  return index >= 0 && index + 1 < levels.length ? levels[index + 1].id : null;
 }

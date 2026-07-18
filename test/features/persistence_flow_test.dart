@@ -69,6 +69,11 @@ void main() {
 }
 
 Future<void> _pumpFrames(WidgetTester tester) async {
+  // Splash now derives the level id to prefetch from progress once it
+  // resolves (rather than loading a fixed level list up front), which adds
+  // one more async hop when the persisted highestUnlockedLevel differs from
+  // the initial fallback id. An extra pump gives that hop room to settle.
+  await tester.pump();
   await tester.pump();
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 400));
