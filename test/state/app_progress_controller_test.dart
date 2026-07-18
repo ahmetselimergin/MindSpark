@@ -47,6 +47,55 @@ void main() {
       expect(repository.saved, [progress]);
     });
 
+    test('persists sound and vibration preference changes', () async {
+      final repository = RecordingProgressRepository();
+      final container = _container(repository);
+      addTearDown(container.dispose);
+      final controller = container.read(appProgressControllerProvider.notifier);
+      await container.read(appProgressControllerProvider.future);
+
+      await controller.setSoundEnabled(false);
+      await controller.setVibrationEnabled(false);
+
+      final progress = container
+          .read(appProgressControllerProvider)
+          .requireValue;
+      expect(progress.soundEnabled, isFalse);
+      expect(progress.vibrationEnabled, isFalse);
+      expect(repository.saved.last, progress);
+    });
+
+    test('resetProgress clears progress but keeps the sound/vibration settings',
+        () async {
+      final stored = PlayerProgress(
+        schemaVersion: 1,
+        highestUnlockedLevel: 7,
+        completedLevelIds: const {1, 2, 3, 4, 5, 6},
+        totalScore: 600,
+        lives: 2,
+        soundEnabled: false,
+        vibrationEnabled: false,
+      );
+      final repository = RecordingProgressRepository(stored);
+      final container = _container(repository);
+      addTearDown(container.dispose);
+      final controller = container.read(appProgressControllerProvider.notifier);
+      await container.read(appProgressControllerProvider.future);
+
+      await controller.resetProgress();
+
+      final progress = container
+          .read(appProgressControllerProvider)
+          .requireValue;
+      expect(progress.highestUnlockedLevel, 1);
+      expect(progress.completedLevelIds, isEmpty);
+      expect(progress.totalScore, 0);
+      expect(progress.lives, 3);
+      expect(progress.soundEnabled, isFalse); // preserved
+      expect(progress.vibrationEnabled, isFalse); // preserved
+      expect(repository.saved.last, progress);
+    });
+
     test(
       'exposes save failure and retries the exact unsaved candidate',
       () async {

@@ -53,6 +53,55 @@ final class AppProgressController extends AsyncNotifier<PlayerProgress> {
     await _save(candidate);
   }
 
+  Future<void> setSoundEnabled(bool value) {
+    return _enqueueMutation(() => _applySettings(soundEnabled: value));
+  }
+
+  Future<void> setVibrationEnabled(bool value) {
+    return _enqueueMutation(() => _applySettings(vibrationEnabled: value));
+  }
+
+  Future<void> _applySettings({
+    bool? soundEnabled,
+    bool? vibrationEnabled,
+  }) async {
+    final current = state.value;
+    if (current == null) {
+      return;
+    }
+
+    final candidate = current.copyWith(
+      soundEnabled: soundEnabled,
+      vibrationEnabled: vibrationEnabled,
+    );
+    if (candidate == current) {
+      return;
+    }
+
+    state = AsyncData(candidate);
+    await _save(candidate);
+  }
+
+  Future<void> resetProgress() {
+    return _enqueueMutation(_resetProgress);
+  }
+
+  Future<void> _resetProgress() async {
+    final current = state.value;
+    if (current == null) {
+      return;
+    }
+
+    // Reset progress but keep the player's sound/vibration preferences.
+    final candidate = const PlayerProgress.initial().copyWith(
+      soundEnabled: current.soundEnabled,
+      vibrationEnabled: current.vibrationEnabled,
+    );
+
+    state = AsyncData(candidate);
+    await _save(candidate);
+  }
+
   Future<void> retryLastSave() {
     return _enqueueMutation(_retryLastSave);
   }

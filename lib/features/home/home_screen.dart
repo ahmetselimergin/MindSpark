@@ -35,7 +35,9 @@ final class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: LayoutBuilder(
+        child: Stack(
+          children: [
+            LayoutBuilder(
           builder: (context, constraints) {
             final compact = constraints.maxHeight < 700;
             return SingleChildScrollView(
@@ -104,6 +106,18 @@ final class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             );
           },
+            ),
+            Align(
+              alignment: Alignment.topRight,
+              child: IconButton(
+                icon: const Icon(Icons.settings_rounded),
+                color: AppColors.frost,
+                tooltip: 'Settings',
+                onPressed: () =>
+                    Navigator.of(context).pushNamed(AppRoutes.settings),
+              ),
+            ),
+          ],
         ),
       ),
     );

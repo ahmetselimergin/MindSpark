@@ -5,6 +5,7 @@ import 'package:mind_spark/core/theme/app_theme.dart';
 import 'package:mind_spark/features/home/home_screen.dart';
 import 'package:mind_spark/features/gameplay/gameplay_screen.dart';
 import 'package:mind_spark/features/result/result_screen.dart';
+import 'package:mind_spark/features/settings/settings_screen.dart';
 import 'package:mind_spark/features/splash/splash_screen.dart';
 import 'package:mind_spark/models/level_model.dart';
 import 'package:mind_spark/repositories/asset_level_repository.dart';
@@ -47,6 +48,7 @@ Route<void> _onGenerateRoute(RouteSettings settings) {
   final Widget page = switch (settings.name) {
     AppRoutes.splash => const SplashScreen(),
     AppRoutes.home => const HomeScreen(),
+    AppRoutes.settings => const SettingsScreen(),
     AppRoutes.gameplay => switch (settings.arguments) {
       GameplayRouteArgs(:final levelId) when levelId > 0 => GameplayScreen(
         levelId: levelId,

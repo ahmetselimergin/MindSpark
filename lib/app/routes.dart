@@ -3,6 +3,7 @@ abstract final class AppRoutes {
   static const home = '/home';
   static const gameplay = '/gameplay';
   static const result = '/result';
+  static const settings = '/settings';
 }
 
 final class GameplayRouteArgs {

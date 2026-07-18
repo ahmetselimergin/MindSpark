@@ -147,6 +147,25 @@ final class PlayerProgress {
     };
   }
 
+  PlayerProgress copyWith({
+    int? highestUnlockedLevel,
+    Set<int>? completedLevelIds,
+    int? totalScore,
+    int? lives,
+    bool? soundEnabled,
+    bool? vibrationEnabled,
+  }) {
+    return PlayerProgress(
+      schemaVersion: schemaVersion,
+      highestUnlockedLevel: highestUnlockedLevel ?? this.highestUnlockedLevel,
+      completedLevelIds: completedLevelIds ?? this.completedLevelIds,
+      totalScore: totalScore ?? this.totalScore,
+      lives: lives ?? this.lives,
+      soundEnabled: soundEnabled ?? this.soundEnabled,
+      vibrationEnabled: vibrationEnabled ?? this.vibrationEnabled,
+    );
+  }
+
   PlayerProgress completeLevel({required int levelId, int? nextLevelId}) {
     if (levelId <= 0) {
       return this;
