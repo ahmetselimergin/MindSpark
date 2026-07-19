@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:mind_spark/game/domain/lives_state.dart';
 import 'package:mind_spark/models/player_progress.dart';
 import 'package:mind_spark/repositories/progress_repository.dart';
@@ -24,6 +25,12 @@ final appProgressControllerProvider =
       AppProgressController.new,
       retry: (_, _) => null,
     );
+
+/// Ephemeral, in-memory flag: the id of a level whose completion should be
+/// celebrated with a status-badge burst on the level map. Not persisted.
+/// Set by the gameplay flow on completion, cleared by [LevelMapView] after the
+/// badge animation plays.
+final celebrateLevelProvider = StateProvider<int?>((ref) => null);
 
 final class AppProgressController extends AsyncNotifier<PlayerProgress> {
   PlayerProgress? _lastUnsavedProgress;
