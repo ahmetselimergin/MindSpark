@@ -57,10 +57,14 @@ abstract final class LivesRegen {
     }
 
     final advancedAnchor = effectiveAnchor.add(interval * gained);
+    // Use the clamped elapsed remainder, not now.difference(advancedAnchor):
+    // on clock skew the raw difference is negative and would inflate the
+    // countdown beyond one interval.
+    final remainder = elapsed - interval * gained;
     return ReconciledLives(
       lives: newLives,
       anchor: advancedAnchor,
-      untilNextLife: interval - now.difference(advancedAnchor),
+      untilNextLife: interval - remainder,
     );
   }
 }
