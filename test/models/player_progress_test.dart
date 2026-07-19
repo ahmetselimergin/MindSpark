@@ -10,7 +10,7 @@ void main() {
       expect(progress.highestUnlockedLevel, 1);
       expect(progress.completedLevelIds, isEmpty);
       expect(progress.totalScore, 0);
-      expect(progress.lives, 5);
+      expect(progress.lives, 3);
       expect(progress.livesRegenAnchor, isNull);
       expect(progress.soundEnabled, isTrue);
       expect(progress.vibrationEnabled, isTrue);
@@ -111,7 +111,7 @@ void main() {
         ('totalScore', {...valid, 'totalScore': -1}),
         ('totalScore', {...valid, 'totalScore': 0}),
         ('lives', {...valid, 'lives': -1}),
-        ('lives', {...valid, 'lives': 6}),
+        ('lives', {...valid, 'lives': 4}),
         ('soundEnabled', {...valid, 'soundEnabled': 1}),
         ('vibrationEnabled', {...valid, 'vibrationEnabled': null}),
       ];
@@ -169,7 +169,7 @@ void main() {
           highestUnlockedLevel: 1,
           completedLevelIds: {1, 4},
           totalScore: 0,
-          lives: 5,
+          lives: 3,
           soundEnabled: true,
           vibrationEnabled: true,
         ),
@@ -195,7 +195,7 @@ void main() {
           highestUnlockedLevel: 1,
           completedLevelIds: const {},
           totalScore: 0,
-          lives: 5,
+          lives: 3,
           soundEnabled: true,
           vibrationEnabled: true,
         ).schemaVersion,
@@ -223,7 +223,7 @@ void main() {
       expect(PlayerProgress.fromPersistedMap(progress.toMap()), progress);
     });
 
-    test('migrates a persisted v1 record: keeps progress, refills lives to 5', () {
+    test('migrates a persisted v1 record: keeps progress, refills lives to 3', () {
       final progress = PlayerProgress.fromPersistedMap(<Object?, Object?>{
         'schemaVersion': 1,
         'highestUnlockedLevel': 6,
@@ -238,18 +238,18 @@ void main() {
       expect(progress.highestUnlockedLevel, 6);
       expect(progress.completedLevelIds, {1, 2, 3, 4, 5});
       expect(progress.totalScore, 500);
-      expect(progress.lives, 5); // refilled
+      expect(progress.lives, 3); // refilled
       expect(progress.livesRegenAnchor, isNull);
       expect(progress.soundEnabled, isFalse);
     });
 
     test('spendLife from full starts the regen clock', () {
       final now = DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true);
-      const full = PlayerProgress.initial(); // 5 lives, no anchor
+      const full = PlayerProgress.initial(); // 3 lives, no anchor
 
       final after = full.spendLife(now: now);
 
-      expect(after.lives, 4);
+      expect(after.lives, 2);
       expect(after.livesRegenAnchor, now);
     });
 
@@ -257,13 +257,13 @@ void main() {
       final anchor = DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true);
       final later = anchor.add(const Duration(minutes: 3));
       final partial = const PlayerProgress.initial().copyWithLives(
-        lives: 3,
+        lives: 2,
         anchor: anchor,
       );
 
       final after = partial.spendLife(now: later);
 
-      expect(after.lives, 2);
+      expect(after.lives, 1);
       expect(after.livesRegenAnchor, anchor); // unchanged
     });
 

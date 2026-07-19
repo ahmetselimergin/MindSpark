@@ -101,7 +101,7 @@ void main() {
       expect(diagnostics.single.field, 'schemaVersion');
     });
 
-    test('migrates a persisted v1 record and refills lives to 5', () async {
+    test('migrates a persisted v1 record and refills lives to 3', () async {
       await box!.put('playerProgress', <String, Object>{
         'schemaVersion': 1,
         'highestUnlockedLevel': 3,
@@ -117,7 +117,7 @@ void main() {
       expect(loaded.schemaVersion, 2);
       expect(loaded.highestUnlockedLevel, 3);
       expect(loaded.completedLevelIds, {1, 2});
-      expect(loaded.lives, 5);
+      expect(loaded.lives, 3);
       expect(loaded.livesRegenAnchor, isNull);
       expect(diagnostics, isEmpty);
     });

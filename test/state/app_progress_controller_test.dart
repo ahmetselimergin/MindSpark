@@ -90,7 +90,7 @@ void main() {
       expect(progress.highestUnlockedLevel, 1);
       expect(progress.completedLevelIds, isEmpty);
       expect(progress.totalScore, 0);
-      expect(progress.lives, 5);
+      expect(progress.lives, 3);
       expect(progress.soundEnabled, isFalse); // preserved
       expect(progress.vibrationEnabled, isFalse); // preserved
       expect(repository.saved.last, progress);
@@ -252,7 +252,7 @@ void main() {
 
     test('spendLife decrements and starts the clock from full', () async {
       final now = DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true);
-      final repository = RecordingProgressRepository(); // initial: 5 lives
+      final repository = RecordingProgressRepository(); // initial: 3 lives
       final container = _containerWithClock(repository, () => now);
       addTearDown(container.dispose);
       final controller = container.read(appProgressControllerProvider.notifier);
@@ -263,7 +263,7 @@ void main() {
       final progress = container
           .read(appProgressControllerProvider)
           .requireValue;
-      expect(progress.lives, 4);
+      expect(progress.lives, 2);
       expect(progress.livesRegenAnchor, now);
       expect(repository.saved.last, progress);
     });
@@ -271,11 +271,11 @@ void main() {
     test('reconcileLives grants elapsed lives and persists once', () async {
       final anchor = DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true);
       final stored = const PlayerProgress.initial().copyWithLives(
-        lives: 2,
+        lives: 1,
         anchor: anchor,
       );
       final repository = RecordingProgressRepository(stored);
-      final now = anchor.add(const Duration(minutes: 21));
+      final now = anchor.add(const Duration(minutes: 11));
       final container = _containerWithClock(repository, () => now);
       addTearDown(container.dispose);
       final controller = container.read(appProgressControllerProvider.notifier);
@@ -286,8 +286,8 @@ void main() {
       final progress = container
           .read(appProgressControllerProvider)
           .requireValue;
-      expect(progress.lives, 4);
-      expect(progress.livesRegenAnchor, anchor.add(const Duration(minutes: 20)));
+      expect(progress.lives, 2);
+      expect(progress.livesRegenAnchor, anchor.add(const Duration(minutes: 10)));
       expect(repository.saved, hasLength(1));
     });
 

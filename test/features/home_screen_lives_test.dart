@@ -45,24 +45,24 @@ void main() {
 
   testWidgets('renders one filled heart per life', (tester) async {
     final stored = const PlayerProgress.initial().copyWithLives(
-      lives: 3,
+      lives: 1,
       anchor: t0,
     );
     await tester.pumpWidget(_harness(stored, t0.add(const Duration(minutes: 1))));
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.favorite), findsNWidgets(3));
+    expect(find.byIcon(Icons.favorite), findsNWidgets(1));
     expect(find.byIcon(Icons.favorite_border), findsNWidgets(2));
     expect(find.textContaining('Next life'), findsOneWidget);
   });
 
-  testWidgets('shows five filled hearts and no countdown when full', (
+  testWidgets('shows three filled hearts and no countdown when full', (
     tester,
   ) async {
     await tester.pumpWidget(_harness(const PlayerProgress.initial(), t0));
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.favorite), findsNWidgets(5));
+    expect(find.byIcon(Icons.favorite), findsNWidgets(3));
     expect(find.textContaining('Next life'), findsNothing);
   });
 
