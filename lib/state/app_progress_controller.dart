@@ -39,15 +39,24 @@ final class AppProgressController extends AsyncNotifier<PlayerProgress> {
     return _repository.load();
   }
 
-  Future<void> completeLevel({required int levelId, int? nextLevelId}) {
+  Future<void> completeLevel({
+    required int levelId,
+    int? nextLevelId,
+    int? stars,
+  }) {
     return _enqueueMutation(
-      () => _completeLevel(levelId: levelId, nextLevelId: nextLevelId),
+      () => _completeLevel(
+        levelId: levelId,
+        nextLevelId: nextLevelId,
+        stars: stars,
+      ),
     );
   }
 
   Future<void> _completeLevel({
     required int levelId,
     required int? nextLevelId,
+    required int? stars,
   }) async {
     final current = state.value;
     if (current == null) {
@@ -57,6 +66,7 @@ final class AppProgressController extends AsyncNotifier<PlayerProgress> {
     final candidate = current.completeLevel(
       levelId: levelId,
       nextLevelId: nextLevelId,
+      stars: stars,
     );
     if (identical(candidate, current)) {
       return;

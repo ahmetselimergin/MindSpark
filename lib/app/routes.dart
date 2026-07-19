@@ -20,8 +20,13 @@ final class OutOfLivesRouteArgs {
 }
 
 final class ResultRouteArgs {
-  const ResultRouteArgs({required this.levelId, required this.awardedScore});
+  const ResultRouteArgs({
+    required this.levelId,
+    required this.awardedScore,
+    required this.stars,
+  });
 
   final int levelId;
   final int awardedScore;
+  final int stars;
 }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mind_spark/app/routes.dart';
-import 'package:mind_spark/core/theme/app_theme.dart';
-import 'package:mind_spark/core/widgets/spark_trail.dart';
+import 'package:mind_spark/core/theme/app_images.dart';
+import 'package:mind_spark/core/widgets/image_button.dart';
 import 'package:mind_spark/state/app_progress_controller.dart';
 
 final class ResultScreen extends ConsumerStatefulWidget {
@@ -10,16 +10,20 @@ final class ResultScreen extends ConsumerStatefulWidget {
     super.key,
     required this.levelId,
     required this.awardedScore,
+    required this.stars,
   });
 
   final int levelId;
   final int awardedScore;
+  final int stars;
 
   @override
   ConsumerState<ResultScreen> createState() => _ResultScreenState();
 }
 
 final class _ResultScreenState extends ConsumerState<ResultScreen> {
+  static const _plankBrown = Color(0xFF5B3A1A);
+
   bool _navigating = false;
 
   @override
@@ -32,85 +36,71 @@ final class _ResultScreenState extends ConsumerState<ResultScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final compact = constraints.maxHeight < 700;
-            return SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: compact ? 12 : 24,
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
+        child: Center(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final boardWidth = constraints.maxWidth.clamp(0.0, 420.0) - 24;
+              return SizedBox(
+                width: boardWidth,
+                child: AspectRatio(
+                  aspectRatio: 3476 / 4031, // wonboard.png
+                  child: Stack(
                     children: [
-                      const SparkTrail(),
-                      SizedBox(height: compact ? 12 : 22),
-                      Text(
-                        'LEVEL COMPLETE',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.headlineMedium
-                            ?.copyWith(fontSize: 29, letterSpacing: 1.2),
+                      Positioned.fill(
+                        child: Image.asset(
+                          AppImages.wonBoard,
+                          fit: BoxFit.contain,
+                        ),
                       ),
-                      SizedBox(height: compact ? 20 : 44),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            '+${widget.awardedScore}',
-                            style: Theme.of(context).textTheme.displayLarge
-                                ?.copyWith(
-                                  fontSize: 88,
-                                  color: AppColors.sparkYellow,
-                                  height: 1,
-                                ),
+                      Align(
+                        alignment: const Alignment(0, -0.35),
+                        child: FractionallySizedBox(
+                          widthFactor: 0.72,
+                          child: Image.asset(AppImages.starN(widget.stars)),
+                        ),
+                      ),
+                      Align(
+                        alignment: const Alignment(0, 0.18),
+                        child: Text(
+                          'Score  $totalScore   (+${widget.awardedScore})',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(color: _plankBrown),
+                        ),
+                      ),
+                      Align(
+                        alignment: const Alignment(0, 0.62),
+                        child: FractionallySizedBox(
+                          widthFactor: 0.66,
+                          child: ImageButton(
+                            asset: AppImages.nextButton,
+                            semanticLabel: 'Next level',
+                            onPressed: _navigating
+                                ? null
+                                : () => _navigate(nextLevelId),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        widget.awardedScore == 0
-                            ? 'Already collected'
-                            : 'Spark score',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.frost.withAlpha(180),
+                      Align(
+                        alignment: const Alignment(-0.92, -0.98),
+                        child: IconButton(
+                          icon: const Icon(Icons.home_rounded),
+                          color: _plankBrown,
+                          tooltip: 'Main menu',
+                          onPressed: _navigating
+                              ? null
+                              : () => Navigator.of(context)
+                                    .pushNamedAndRemoveUntil(
+                                      AppRoutes.home,
+                                      (_) => false,
+                                    ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Total Score: $totalScore',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      SizedBox(height: compact ? 24 : 52),
-                      FilledButton(
-                        onPressed: _navigating
-                            ? null
-                            : () => _navigate(nextLevelId),
-                        child: const Text('NEXT LEVEL'),
-                      ),
-                      const SizedBox(height: 12),
-                      TextButton(
-                        onPressed: _navigating
-                            ? null
-                            : () => Navigator.of(context)
-                                  .pushNamedAndRemoveUntil(
-                                    AppRoutes.home,
-                                    (_) => false,
-                                  ),
-                        child: const Text('HOME'),
                       ),
                     ],
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );

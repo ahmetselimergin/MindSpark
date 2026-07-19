@@ -57,9 +57,9 @@ Route<void> _onGenerateRoute(RouteSettings settings) {
       _ => const _SafeRouteError(),
     },
     AppRoutes.result => switch (settings.arguments) {
-      ResultRouteArgs(:final levelId, :final awardedScore)
-          when levelId > 0 && awardedScore >= 0 =>
-        ResultScreen(levelId: levelId, awardedScore: awardedScore),
+      ResultRouteArgs(:final levelId, :final awardedScore, :final stars)
+          when levelId > 0 && awardedScore >= 0 && stars >= 1 && stars <= 3 =>
+        ResultScreen(levelId: levelId, awardedScore: awardedScore, stars: stars),
       _ => const _SafeRouteError(),
     },
     AppRoutes.outOfLives => switch (settings.arguments) {

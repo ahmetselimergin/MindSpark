@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mind_spark/app/app.dart';
 import 'package:mind_spark/app/routes.dart';
+import 'package:mind_spark/core/widgets/image_button.dart';
 import 'package:mind_spark/features/gameplay/gameplay_screen.dart';
 import 'package:mind_spark/game/mind_spark_game.dart';
 import 'package:mind_spark/models/level_model.dart';
@@ -56,13 +57,13 @@ void main() {
       harness.completeLatest();
       await _pumpRoute(tester);
 
-      expect(find.text('LEVEL COMPLETE'), findsOneWidget);
-      expect(find.text('+100'), findsOneWidget);
-      expect(find.text('Total Score: 100'), findsOneWidget);
+      expect(find.bySemanticsLabel('Next level'), findsOneWidget);
+      expect(find.textContaining('+100'), findsOneWidget);
+      expect(find.textContaining('Score'), findsOneWidget);
       expect(progress.saved.single.completedLevelIds, {1});
-      expect(find.text('NEXT LEVEL'), findsOneWidget);
+      expect(find.bySemanticsLabel('Next level'), findsOneWidget);
 
-      await tester.tap(find.text('NEXT LEVEL'));
+      tester.widget<ImageButton>(find.byType(ImageButton)).onPressed!();
       await _pumpRoute(tester);
 
       expect(find.text('Level 2'), findsOneWidget);
@@ -93,8 +94,8 @@ void main() {
     harness.completeLatest();
     await _pumpRoute(tester);
 
-    expect(find.text('+0'), findsOneWidget);
-    expect(find.text('Total Score: 100'), findsOneWidget);
+    expect(find.textContaining('(+0)'), findsOneWidget);
+    expect(find.textContaining('Score'), findsOneWidget);
     expect(progress.saved.single.totalScore, 100);
   });
 
@@ -116,14 +117,14 @@ void main() {
 
     expect(find.text('Progress was not saved.'), findsOneWidget);
     expect(find.text('RETRY SAVE'), findsOneWidget);
-    expect(find.text('LEVEL COMPLETE'), findsNothing);
+    expect(find.bySemanticsLabel('Next level'), findsNothing);
     expect(progress.attempts, hasLength(1));
 
     await tester.tap(find.text('RETRY SAVE'));
     await _pumpRoute(tester);
 
-    expect(find.text('LEVEL COMPLETE'), findsOneWidget);
-    expect(find.text('+100'), findsOneWidget);
+    expect(find.bySemanticsLabel('Next level'), findsOneWidget);
+    expect(find.textContaining('+100'), findsOneWidget);
     expect(progress.attempts, hasLength(2));
     expect(progress.saved, hasLength(1));
     expect(identical(progress.attempts[0], progress.attempts[1]), isTrue);
@@ -153,7 +154,7 @@ void main() {
     await tester.tap(find.text('RETRY SAVE'));
     await _pumpRoute(tester);
 
-    expect(find.text('LEVEL COMPLETE'), findsNothing);
+    expect(find.bySemanticsLabel('Next level'), findsNothing);
     expect(find.text('Progress must be loaded again.'), findsOneWidget);
     expect(find.text('RETRY PROGRESS'), findsOneWidget);
     expect(progress.attempts, hasLength(1));
@@ -183,7 +184,7 @@ void main() {
     await tester.tap(find.text('RETRY SAVE'));
     await _pumpRoute(tester);
 
-    expect(find.text('LEVEL COMPLETE'), findsNothing);
+    expect(find.bySemanticsLabel('Next level'), findsNothing);
     expect(find.text('Progress must be loaded again.'), findsOneWidget);
     expect(progress.attempts, hasLength(1));
 
@@ -216,7 +217,7 @@ void main() {
     await tester.tap(find.text('RETRY SAVE'));
     await _pumpRoute(tester);
 
-    expect(find.text('LEVEL COMPLETE'), findsNothing);
+    expect(find.bySemanticsLabel('Next level'), findsNothing);
     expect(find.text('Progress must be loaded again.'), findsOneWidget);
     expect(find.text('RETRY PROGRESS'), findsOneWidget);
     expect(progress.attempts, hasLength(1));
@@ -249,10 +250,10 @@ void main() {
 
       // Endless progression: completing a level always offers NEXT LEVEL,
       // plus a secondary HOME shortcut back to the hub.
-      expect(find.text('NEXT LEVEL'), findsOneWidget);
-      expect(find.text('HOME'), findsOneWidget);
+      expect(find.bySemanticsLabel('Next level'), findsOneWidget);
+      expect(find.byTooltip('Main menu'), findsOneWidget);
 
-      await tester.tap(find.text('HOME'));
+      await tester.tap(find.byTooltip('Main menu'));
       await tester.pumpAndSettle();
       expect(find.text('Best Score: 200'), findsOneWidget);
     },
@@ -269,7 +270,7 @@ void main() {
 
     navigatorKey.currentState!.pushNamed(
       AppRoutes.gameplay,
-      arguments: const ResultRouteArgs(levelId: 1, awardedScore: 100),
+      arguments: const ResultRouteArgs(levelId: 1, awardedScore: 100, stars: 1),
     );
     await tester.pumpAndSettle();
 
@@ -358,15 +359,19 @@ void main() {
 
       navigatorKey.currentState!.pushNamed(
         AppRoutes.result,
-        arguments: const ResultRouteArgs(levelId: 99, awardedScore: 100),
+        arguments: const ResultRouteArgs(
+          levelId: 99,
+          awardedScore: 100,
+          stars: 3,
+        ),
       );
       await _pumpRoute(tester);
 
-      expect(find.text('LEVEL COMPLETE'), findsOneWidget);
-      expect(find.text('NEXT LEVEL'), findsOneWidget);
-      expect(find.text('HOME'), findsOneWidget);
+      expect(find.bySemanticsLabel('Next level'), findsOneWidget);
+      expect(find.bySemanticsLabel('Next level'), findsOneWidget);
+      expect(find.byTooltip('Main menu'), findsOneWidget);
 
-      await tester.tap(find.text('HOME'));
+      await tester.tap(find.byTooltip('Main menu'));
       await tester.pumpAndSettle();
 
       expect(find.text('PLAY'), findsOneWidget);
@@ -408,8 +413,8 @@ void main() {
     _useCompactLargeTextView(tester);
     await tester.pump();
 
-    expect(find.text('Total Score: 100'), findsOneWidget);
-    expect(find.text('NEXT LEVEL'), findsOneWidget);
+    expect(find.textContaining('Score'), findsOneWidget);
+    expect(find.bySemanticsLabel('Next level'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -439,9 +444,7 @@ void main() {
     harness.completeLatest();
     await _pumpRoute(tester);
 
-    final next = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'NEXT LEVEL'),
-    );
+    final next = tester.widget<ImageButton>(find.byType(ImageButton));
     next.onPressed!();
     next.onPressed!();
     await _pumpRoute(tester);

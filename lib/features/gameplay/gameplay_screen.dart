@@ -45,6 +45,7 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen>
   bool _saving = false;
   bool _navigated = false;
   int _awardedScore = 0;
+  int _stars = 1;
   Timer? _countdown;
   Duration _timeLimit = Duration.zero;
   Duration _remaining = Duration.zero;
@@ -231,6 +232,7 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen>
     }
     _completionHandled = true;
     _countdown?.cancel();
+    _stars = starsForResult(remaining: _remaining, timeLimit: _timeLimit);
 
     final before = ref.read(appProgressControllerProvider).value;
     if (before == null) {
@@ -246,7 +248,11 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen>
 
     await ref
         .read(appProgressControllerProvider.notifier)
-        .completeLevel(levelId: widget.levelId, nextLevelId: nextLevelId);
+        .completeLevel(
+          levelId: widget.levelId,
+          nextLevelId: nextLevelId,
+          stars: _stars,
+        );
     if (!mounted) {
       return;
     }
@@ -339,6 +345,7 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen>
       arguments: ResultRouteArgs(
         levelId: widget.levelId,
         awardedScore: _awardedScore,
+        stars: _stars,
       ),
     );
   }

@@ -27,8 +27,8 @@ void main() {
     firstHarness.completeLatest();
     await _pumpFrames(tester);
 
-    expect(find.text('LEVEL COMPLETE'), findsOneWidget);
-    expect(find.text('+100'), findsOneWidget);
+    expect(find.bySemanticsLabel('Next level'), findsOneWidget);
+    expect(find.textContaining('+100'), findsOneWidget);
     expect(repository.value.totalScore, 100);
     expect(repository.value.highestUnlockedLevel, 2);
     expect(repository.value.completedLevelIds, {1});
@@ -60,8 +60,8 @@ void main() {
     secondHarness.completeLatest();
     await _pumpFrames(tester);
 
-    expect(find.text('LEVEL COMPLETE'), findsOneWidget);
-    expect(find.text('+0'), findsOneWidget);
+    expect(find.bySemanticsLabel('Next level'), findsOneWidget);
+    expect(find.textContaining('(+0)'), findsOneWidget);
     expect(repository.value.totalScore, 100);
     expect(repository.value.highestUnlockedLevel, 2);
     expect(repository.value.completedLevelIds, {1});
