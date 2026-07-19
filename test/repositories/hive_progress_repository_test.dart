@@ -95,7 +95,7 @@ void main() {
     });
 
     test('rejects unsupported persisted schema versions', () async {
-      await _putRecord(box!, schemaVersion: 3);
+      await _putRecord(box!, schemaVersion: 4);
 
       expect(await repository!.load(), const PlayerProgress.initial());
       expect(diagnostics.single.field, 'schemaVersion');
@@ -114,11 +114,12 @@ void main() {
 
       final loaded = await repository!.load();
 
-      expect(loaded.schemaVersion, 2);
+      expect(loaded.schemaVersion, 3);
       expect(loaded.highestUnlockedLevel, 3);
       expect(loaded.completedLevelIds, {1, 2});
       expect(loaded.lives, 3);
       expect(loaded.livesRegenAnchor, isNull);
+      expect(loaded.levelStars, isEmpty);
       expect(diagnostics, isEmpty);
     });
 

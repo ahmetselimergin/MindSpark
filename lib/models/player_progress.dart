@@ -8,6 +8,7 @@ final class PlayerProgress {
     required int totalScore,
     required int lives,
     DateTime? livesRegenAnchor,
+    Map<int, int> levelStars = const <int, int>{},
     required bool soundEnabled,
     required bool vibrationEnabled,
   }) {
@@ -18,6 +19,7 @@ final class PlayerProgress {
       totalScore: totalScore,
       lives: lives,
       livesRegenAnchor: livesRegenAnchor,
+      levelStars: Map<int, int>.unmodifiable(levelStars),
       soundEnabled: soundEnabled,
       vibrationEnabled: vibrationEnabled,
     );
@@ -30,18 +32,20 @@ final class PlayerProgress {
     required this.totalScore,
     required this.lives,
     required this.livesRegenAnchor,
+    required this.levelStars,
     required this.soundEnabled,
     required this.vibrationEnabled,
   });
 
   const PlayerProgress.initial()
     : this._(
-        schemaVersion: 2,
+        schemaVersion: 3,
         highestUnlockedLevel: 1,
         completedLevelIds: const <int>{},
         totalScore: 0,
         lives: LivesRegen.maxLives,
         livesRegenAnchor: null,
+        levelStars: const <int, int>{},
         soundEnabled: true,
         vibrationEnabled: true,
       );
@@ -65,6 +69,7 @@ final class PlayerProgress {
       totalScore: _nonNegativeInt(map['totalScore'], fallback: 0),
       lives: _boundedLives(map['lives']),
       livesRegenAnchor: _anchorFromMillis(map['livesRegenAnchor']),
+      levelStars: _lenientLevelStars(map['levelStars']),
       soundEnabled: map['soundEnabled'] is bool
           ? map['soundEnabled']! as bool
           : true,
@@ -83,10 +88,10 @@ final class PlayerProgress {
     }
 
     final schemaVersion = _requiredInt(record, 'schemaVersion');
-    if (schemaVersion != 1 && schemaVersion != 2) {
+    if (schemaVersion != 1 && schemaVersion != 2 && schemaVersion != 3) {
       throw const ProgressFormatException(
         field: 'schemaVersion',
-        message: 'must be 1 or 2',
+        message: 'must be 1, 2, or 3',
       );
     }
 
@@ -127,14 +132,19 @@ final class PlayerProgress {
     final anchor = schemaVersion == 1
         ? null
         : _persistedAnchor(record, migratedLives);
+    // levelStars arrived in v3; earlier records start empty.
+    final levelStars = schemaVersion == 3
+        ? _requiredLevelStars(record, completedLevelIds)
+        : const <int, int>{};
 
     return PlayerProgress(
-      schemaVersion: 2,
+      schemaVersion: 3,
       highestUnlockedLevel: highestUnlockedLevel,
       completedLevelIds: completedLevelIds,
       totalScore: totalScore,
       lives: migratedLives,
       livesRegenAnchor: anchor,
+      levelStars: levelStars,
       soundEnabled: _requiredBool(record, 'soundEnabled'),
       vibrationEnabled: _requiredBool(record, 'vibrationEnabled'),
     );
@@ -146,17 +156,21 @@ final class PlayerProgress {
   final int totalScore;
   final int lives;
   final DateTime? livesRegenAnchor;
+  final Map<int, int> levelStars;
   final bool soundEnabled;
   final bool vibrationEnabled;
 
   Map<String, Object> toMap() {
     final sortedCompletedLevelIds = completedLevelIds.toList()..sort();
     final map = <String, Object>{
-      'schemaVersion': 2,
+      'schemaVersion': 3,
       'highestUnlockedLevel': highestUnlockedLevel,
       'completedLevelIds': sortedCompletedLevelIds,
       'totalScore': totalScore,
       'lives': lives,
+      'levelStars': <int, int>{
+        for (final entry in levelStars.entries) entry.key: entry.value,
+      },
       'soundEnabled': soundEnabled,
       'vibrationEnabled': vibrationEnabled,
     };
@@ -182,6 +196,7 @@ final class PlayerProgress {
       totalScore: totalScore ?? this.totalScore,
       lives: lives ?? this.lives,
       livesRegenAnchor: livesRegenAnchor,
+      levelStars: levelStars,
       soundEnabled: soundEnabled ?? this.soundEnabled,
       vibrationEnabled: vibrationEnabled ?? this.vibrationEnabled,
     );
@@ -197,37 +212,7 @@ final class PlayerProgress {
       totalScore: totalScore,
       lives: lives,
       livesRegenAnchor: anchor,
-      soundEnabled: soundEnabled,
-      vibrationEnabled: vibrationEnabled,
-    );
-  }
-
-  PlayerProgress completeLevel({required int levelId, int? nextLevelId}) {
-    if (levelId <= 0) {
-      return this;
-    }
-
-    final isFirstCompletion = !completedLevelIds.contains(levelId);
-    final unlocksNextLevel =
-        nextLevelId != null && nextLevelId > highestUnlockedLevel;
-    if (!isFirstCompletion && !unlocksNextLevel) {
-      return this;
-    }
-
-    final updatedCompletedLevelIds = isFirstCompletion
-        ? {...completedLevelIds, levelId}
-        : completedLevelIds;
-    final updatedHighestUnlockedLevel = unlocksNextLevel
-        ? nextLevelId
-        : highestUnlockedLevel;
-
-    return PlayerProgress(
-      schemaVersion: schemaVersion,
-      highestUnlockedLevel: updatedHighestUnlockedLevel,
-      completedLevelIds: Set<int>.unmodifiable(updatedCompletedLevelIds),
-      totalScore: totalScore + (isFirstCompletion ? 100 : 0),
-      lives: lives,
-      livesRegenAnchor: livesRegenAnchor,
+      levelStars: levelStars,
       soundEnabled: soundEnabled,
       vibrationEnabled: vibrationEnabled,
     );
@@ -246,6 +231,53 @@ final class PlayerProgress {
     );
   }
 
+  PlayerProgress completeLevel({
+    required int levelId,
+    int? nextLevelId,
+    int? stars,
+  }) {
+    if (levelId <= 0) {
+      return this;
+    }
+
+    final isFirstCompletion = !completedLevelIds.contains(levelId);
+    final unlocksNextLevel =
+        nextLevelId != null && nextLevelId > highestUnlockedLevel;
+    final newStars = stars?.clamp(1, 3);
+    final improvesStars =
+        newStars != null && newStars > (levelStars[levelId] ?? 0);
+    if (!isFirstCompletion && !unlocksNextLevel && !improvesStars) {
+      return this;
+    }
+
+    final updatedCompletedLevelIds = isFirstCompletion
+        ? {...completedLevelIds, levelId}
+        : completedLevelIds;
+    final updatedHighestUnlockedLevel = unlocksNextLevel
+        ? nextLevelId
+        : highestUnlockedLevel;
+    final updatedLevelStars = newStars == null
+        ? levelStars
+        : {
+            ...levelStars,
+            levelId: newStars > (levelStars[levelId] ?? 0)
+                ? newStars
+                : levelStars[levelId]!,
+          };
+
+    return PlayerProgress(
+      schemaVersion: schemaVersion,
+      highestUnlockedLevel: updatedHighestUnlockedLevel,
+      completedLevelIds: Set<int>.unmodifiable(updatedCompletedLevelIds),
+      totalScore: totalScore + (isFirstCompletion ? 100 : 0),
+      lives: lives,
+      livesRegenAnchor: livesRegenAnchor,
+      levelStars: Map<int, int>.unmodifiable(updatedLevelStars),
+      soundEnabled: soundEnabled,
+      vibrationEnabled: vibrationEnabled,
+    );
+  }
+
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -256,6 +288,7 @@ final class PlayerProgress {
             totalScore == other.totalScore &&
             lives == other.lives &&
             livesRegenAnchor == other.livesRegenAnchor &&
+            _levelStarsEqual(levelStars, other.levelStars) &&
             soundEnabled == other.soundEnabled &&
             vibrationEnabled == other.vibrationEnabled;
   }
@@ -268,6 +301,9 @@ final class PlayerProgress {
     totalScore,
     lives,
     livesRegenAnchor,
+    Object.hashAllUnordered(
+      levelStars.entries.map((e) => Object.hash(e.key, e.value)),
+    ),
     soundEnabled,
     vibrationEnabled,
   );
@@ -332,7 +368,7 @@ int _positiveInt(Object? value, {required int fallback}) {
 
 /// The current persisted schema version. Every constructed record is stamped
 /// with it, so in-memory objects always speak the latest schema.
-int _schemaVersion(Object? value) => 2;
+int _schemaVersion(Object? value) => 3;
 
 int _boundedLives(Object? value) => value is int
     ? value.clamp(0, LivesRegen.maxLives)
@@ -359,10 +395,76 @@ DateTime? _persistedAnchor(Map<Object?, Object?> record, int lives) {
   return DateTime.fromMillisecondsSinceEpoch(raw, isUtc: true);
 }
 
+/// Strict parse of a v3 `levelStars` map: positive completed-level keys mapping
+/// to 1..3. Accepts int or numeric-string keys (Hive/JSON round-trips).
+Map<int, int> _requiredLevelStars(
+  Map<Object?, Object?> record,
+  Set<int> completed,
+) {
+  final raw = record['levelStars'];
+  if (raw == null) {
+    return const <int, int>{};
+  }
+  if (raw is! Map) {
+    throw const ProgressFormatException(
+      field: 'levelStars',
+      message: 'must be a map',
+    );
+  }
+  final out = <int, int>{};
+  for (final entry in raw.entries) {
+    final key = entry.key;
+    final levelId = key is int ? key : int.tryParse('$key');
+    final value = entry.value;
+    if (levelId == null ||
+        levelId <= 0 ||
+        value is! int ||
+        value < 1 ||
+        value > 3 ||
+        !completed.contains(levelId)) {
+      throw const ProgressFormatException(
+        field: 'levelStars',
+        message: 'keys must be completed level ids, values 1..3',
+      );
+    }
+    out[levelId] = value;
+  }
+  return Map<int, int>.unmodifiable(out);
+}
+
+/// Lenient parse for [PlayerProgress.fromMap]: silently drops bad entries.
+Map<int, int> _lenientLevelStars(Object? value) {
+  if (value is! Map) {
+    return const <int, int>{};
+  }
+  final out = <int, int>{};
+  for (final entry in value.entries) {
+    final key = entry.key;
+    final levelId = key is int ? key : int.tryParse('$key');
+    final v = entry.value;
+    if (levelId != null && levelId > 0 && v is int && v >= 1 && v <= 3) {
+      out[levelId] = v;
+    }
+  }
+  return Map<int, int>.unmodifiable(out);
+}
+
 int _nonNegativeInt(Object? value, {required int fallback}) {
   return value is int && value >= 0 ? value : fallback;
 }
 
 bool _setsEqual(Set<int> first, Set<int> second) {
   return first.length == second.length && first.containsAll(second);
+}
+
+bool _levelStarsEqual(Map<int, int> first, Map<int, int> second) {
+  if (first.length != second.length) {
+    return false;
+  }
+  for (final entry in first.entries) {
+    if (second[entry.key] != entry.value) {
+      return false;
+    }
+  }
+  return true;
 }

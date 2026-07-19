@@ -6,12 +6,13 @@ void main() {
     test('initial progress uses schema defaults', () {
       const progress = PlayerProgress.initial();
 
-      expect(progress.schemaVersion, 2);
+      expect(progress.schemaVersion, 3);
       expect(progress.highestUnlockedLevel, 1);
       expect(progress.completedLevelIds, isEmpty);
       expect(progress.totalScore, 0);
       expect(progress.lives, 3);
       expect(progress.livesRegenAnchor, isNull);
+      expect(progress.levelStars, isEmpty);
       expect(progress.soundEnabled, isTrue);
       expect(progress.vibrationEnabled, isTrue);
     });
@@ -83,7 +84,7 @@ void main() {
       final cases = <(String, Object?)>[
         ('record', 'not a map'),
         ('schemaVersion', {...valid, 'schemaVersion': true}),
-        ('schemaVersion', {...valid, 'schemaVersion': 3}),
+        ('schemaVersion', {...valid, 'schemaVersion': 4}),
         ('highestUnlockedLevel', {...valid, 'highestUnlockedLevel': 0}),
         ('completedLevelIds', {...valid, 'completedLevelIds': '1'}),
         (
@@ -181,11 +182,11 @@ void main() {
       );
     });
 
-    test('stamps the current schema version (2) on every constructed record', () {
+    test('stamps the current schema version (3) on every constructed record', () {
       for (final raw in <Object?>[99, 0, -1, true, false, 1.0, '1', 1]) {
         expect(
           PlayerProgress.fromMap({'schemaVersion': raw}).schemaVersion,
-          2,
+          3,
           reason: 'schemaVersion: $raw',
         );
       }
@@ -199,7 +200,7 @@ void main() {
           soundEnabled: true,
           vibrationEnabled: true,
         ).schemaVersion,
-        2,
+        3,
       );
     });
 
@@ -234,13 +235,81 @@ void main() {
         'vibrationEnabled': true,
       });
 
-      expect(progress.schemaVersion, 2);
+      expect(progress.schemaVersion, 3);
       expect(progress.highestUnlockedLevel, 6);
       expect(progress.completedLevelIds, {1, 2, 3, 4, 5});
       expect(progress.totalScore, 500);
       expect(progress.lives, 3); // refilled
       expect(progress.livesRegenAnchor, isNull);
+      expect(progress.levelStars, isEmpty);
       expect(progress.soundEnabled, isFalse);
+    });
+
+    test('completeLevel records and keeps the best stars', () {
+      final a = const PlayerProgress.initial().completeLevel(
+        levelId: 1,
+        nextLevelId: 2,
+        stars: 2,
+      );
+      expect(a.levelStars, {1: 2});
+      final b = a.completeLevel(levelId: 1, stars: 1); // replay, worse
+      expect(b.levelStars, {1: 2}); // best kept
+      final c = a.completeLevel(levelId: 1, nextLevelId: 3, stars: 3);
+      expect(c.levelStars, {1: 3}); // improved
+    });
+
+    test('v3 round-trips levelStars', () {
+      final record = <Object?, Object?>{
+        'schemaVersion': 3,
+        'highestUnlockedLevel': 3,
+        'completedLevelIds': <int>[1, 2],
+        'totalScore': 200,
+        'lives': 2,
+        'levelStars': <String, Object?>{'1': 3, '2': 2},
+        'soundEnabled': true,
+        'vibrationEnabled': true,
+      };
+      final p = PlayerProgress.fromPersistedMap(record);
+      expect(p.levelStars, {1: 3, 2: 2});
+      expect(PlayerProgress.fromPersistedMap(p.toMap()), p);
+    });
+
+    test('v2 record migrates to v3 with empty levelStars', () {
+      final p = PlayerProgress.fromPersistedMap(<Object?, Object?>{
+        'schemaVersion': 2,
+        'highestUnlockedLevel': 2,
+        'completedLevelIds': <int>[1],
+        'totalScore': 100,
+        'lives': 2,
+        'soundEnabled': true,
+        'vibrationEnabled': true,
+      });
+      expect(p.schemaVersion, 3);
+      expect(p.levelStars, isEmpty);
+      expect(p.lives, 2);
+    });
+
+    test('rejects bad levelStars', () {
+      Map<Object?, Object?> base() => {
+        'schemaVersion': 3,
+        'highestUnlockedLevel': 2,
+        'completedLevelIds': <int>[1],
+        'totalScore': 100,
+        'lives': 2,
+        'soundEnabled': true,
+        'vibrationEnabled': true,
+      };
+      for (final bad in <Object?>[
+        {'1': 0}, // < 1
+        {'1': 4}, // > 3
+        {'2': 3}, // key not completed
+      ]) {
+        expect(
+          () => PlayerProgress.fromPersistedMap({...base(), 'levelStars': bad}),
+          throwsA(isA<ProgressFormatException>()),
+          reason: 'levelStars: $bad',
+        );
+      }
     });
 
     test('spendLife from full starts the regen clock', () {
