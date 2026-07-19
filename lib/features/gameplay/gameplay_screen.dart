@@ -108,22 +108,55 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen>
       return;
     }
     final livesLeft = ref.read(appProgressControllerProvider).value?.lives ?? 0;
-    if (livesLeft > 0) {
-      _game?.restart();
-      setState(() {
-        _remaining = _timeLimit;
-      });
-      _countdown = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Time's up!  -1 life")),
-      );
-    } else {
+    if (livesLeft <= 0) {
       _navigated = true;
       Navigator.of(context).pushReplacementNamed(
         AppRoutes.outOfLives,
         arguments: OutOfLivesRouteArgs(widget.levelId),
       );
+      return;
     }
+    // Lives remain: let the player choose to retry the level or go home.
+    final retry = await _showTimeUpDialog(livesLeft);
+    if (!mounted) {
+      return;
+    }
+    if (retry) {
+      _game?.restart();
+      setState(() {
+        _remaining = _timeLimit;
+      });
+      _countdown = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+    } else {
+      _navigated = true;
+      Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil(AppRoutes.home, (_) => false);
+    }
+  }
+
+  Future<bool> _showTimeUpDialog(int livesLeft) async {
+    final retry = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text("Time's up!"),
+        content: Text(
+          'You lost a life. $livesLeft ${livesLeft == 1 ? 'life' : 'lives'} left.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('HOME'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('RETRY'),
+          ),
+        ],
+      ),
+    );
+    return retry ?? false;
   }
 
   @override
@@ -398,7 +431,7 @@ final class _GameplayView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  for (var i = 0; i < 5; i++)
+                  for (var i = 0; i < LivesRegen.maxLives; i++)
                     Icon(
                       i < lives ? Icons.favorite : Icons.favorite_border,
                       color: AppColors.coralPulse,

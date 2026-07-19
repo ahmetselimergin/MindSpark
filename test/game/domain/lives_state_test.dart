@@ -7,8 +7,8 @@ void main() {
 
   group('LivesRegen.reconcile', () {
     test('full lives report no anchor and no countdown', () {
-      final r = LivesRegen.reconcile(lives: 5, anchor: null, now: t0);
-      expect(r.lives, 5);
+      final r = LivesRegen.reconcile(lives: 3, anchor: null, now: t0);
+      expect(r.lives, 3);
       expect(r.anchor, isNull);
       expect(r.untilNextLife, isNull);
     });
@@ -32,30 +32,30 @@ void main() {
     });
 
     test('exactly one elapsed window grants one life and advances the anchor', () {
-      final r = LivesRegen.reconcile(lives: 2, anchor: t0, now: t0.add(tenMin));
-      expect(r.lives, 3);
+      final r = LivesRegen.reconcile(lives: 1, anchor: t0, now: t0.add(tenMin));
+      expect(r.lives, 2);
       expect(r.anchor, t0.add(tenMin));
       expect(r.untilNextLife, tenMin);
     });
 
     test('multiple windows grant multiple lives and carry the remainder', () {
       final r = LivesRegen.reconcile(
-        lives: 1,
+        lives: 0,
         anchor: t0,
         now: t0.add(const Duration(minutes: 25)),
       );
-      expect(r.lives, 3);
+      expect(r.lives, 2);
       expect(r.anchor, t0.add(const Duration(minutes: 20)));
       expect(r.untilNextLife, const Duration(minutes: 5));
     });
 
     test('reaching the cap clears the anchor and countdown', () {
       final r = LivesRegen.reconcile(
-        lives: 3,
+        lives: 1,
         anchor: t0,
         now: t0.add(const Duration(minutes: 45)),
       );
-      expect(r.lives, 5);
+      expect(r.lives, 3);
       expect(r.anchor, isNull);
       expect(r.untilNextLife, isNull);
     });

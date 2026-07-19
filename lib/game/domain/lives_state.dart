@@ -23,7 +23,7 @@ final class ReconciledLives {
 
 /// Wall-clock life regeneration: one life every [interval], capped at [maxLives].
 abstract final class LivesRegen {
-  static const int maxLives = 5;
+  static const int maxLives = 3;
   static const Duration interval = Duration(minutes: 10);
 
   static ReconciledLives reconcile({

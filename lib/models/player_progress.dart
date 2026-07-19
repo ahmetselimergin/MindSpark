@@ -40,7 +40,7 @@ final class PlayerProgress {
         highestUnlockedLevel: 1,
         completedLevelIds: const <int>{},
         totalScore: 0,
-        lives: 5,
+        lives: LivesRegen.maxLives,
         livesRegenAnchor: null,
         soundEnabled: true,
         vibrationEnabled: true,
@@ -115,15 +115,15 @@ final class PlayerProgress {
     }
 
     final lives = _requiredInt(record, 'lives');
-    if (lives < 0 || lives > 5) {
-      throw const ProgressFormatException(
+    if (lives < 0 || lives > LivesRegen.maxLives) {
+      throw ProgressFormatException(
         field: 'lives',
-        message: 'must be between 0 and 5',
+        message: 'must be between 0 and ${LivesRegen.maxLives}',
       );
     }
 
     // v1 records predate lives regen: give a full tank and preserve progress.
-    final migratedLives = schemaVersion == 1 ? 5 : lives;
+    final migratedLives = schemaVersion == 1 ? LivesRegen.maxLives : lives;
     final anchor = schemaVersion == 1
         ? null
         : _persistedAnchor(record, migratedLives);
@@ -334,7 +334,9 @@ int _positiveInt(Object? value, {required int fallback}) {
 /// with it, so in-memory objects always speak the latest schema.
 int _schemaVersion(Object? value) => 2;
 
-int _boundedLives(Object? value) => value is int ? value.clamp(0, 5) : 5;
+int _boundedLives(Object? value) => value is int
+    ? value.clamp(0, LivesRegen.maxLives)
+    : LivesRegen.maxLives;
 
 DateTime? _anchorFromMillis(Object? value) => value is int
     ? DateTime.fromMillisecondsSinceEpoch(value, isUtc: true)
@@ -342,7 +344,7 @@ DateTime? _anchorFromMillis(Object? value) => value is int
 
 DateTime? _persistedAnchor(Map<Object?, Object?> record, int lives) {
   final raw = record['livesRegenAnchor'];
-  if (lives >= 5) {
+  if (lives >= LivesRegen.maxLives) {
     return null; // full ⇒ no regen in progress
   }
   if (raw == null) {

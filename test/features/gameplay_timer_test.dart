@@ -58,20 +58,21 @@ Widget _routedApp(DateTime now, ProgressRepository repo) => ProviderScope(
 void main() {
   final t0 = DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true);
 
-  testWidgets('expiry with lives left spends one and stays on the level', (
+  testWidgets('timeout spends a life and shows a retry/home dialog', (
     tester,
   ) async {
-    final repo = InMemoryProgressRepository(_stored(lives: 3, anchor: t0));
+    final repo = InMemoryProgressRepository(_stored(lives: 3));
     await tester.pumpWidget(_directApp(t0, repo));
     await tester.pump(); // resolve providers, build game + start timer
     await tester.pump(const Duration(seconds: 3)); // elapse past the 2s limit
     // Flame renders continuously, so pumpAndSettle never settles here; use
-    // fixed pumps to flush the spendLife save and the board restart.
+    // fixed pumps to flush the spendLife save and show the dialog.
     await tester.pump();
     await tester.pump();
 
-    expect(repo.value.lives, 2);
-    expect(find.byType(GameplayScreen), findsOneWidget); // still on the level
+    expect(repo.value.lives, 2); // a life was spent
+    expect(find.text('RETRY'), findsOneWidget);
+    expect(find.text('HOME'), findsOneWidget);
   });
 
   testWidgets('expiry on the last life routes to Out-of-Lives', (tester) async {

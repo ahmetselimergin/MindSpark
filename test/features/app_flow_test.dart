@@ -78,7 +78,7 @@ void main() {
         highestUnlockedLevel: 1,
         completedLevelIds: {1},
         totalScore: 100,
-        lives: 5,
+        lives: 3,
         soundEnabled: true,
         vibrationEnabled: true,
       ),
