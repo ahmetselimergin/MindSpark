@@ -243,6 +243,40 @@ void main() {
       expect(progress.soundEnabled, isFalse);
     });
 
+    test('spendLife from full starts the regen clock', () {
+      final now = DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true);
+      const full = PlayerProgress.initial(); // 5 lives, no anchor
+
+      final after = full.spendLife(now: now);
+
+      expect(after.lives, 4);
+      expect(after.livesRegenAnchor, now);
+    });
+
+    test('spendLife below full keeps the running anchor', () {
+      final anchor = DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true);
+      final later = anchor.add(const Duration(minutes: 3));
+      final partial = const PlayerProgress.initial().copyWithLives(
+        lives: 3,
+        anchor: anchor,
+      );
+
+      final after = partial.spendLife(now: later);
+
+      expect(after.lives, 2);
+      expect(after.livesRegenAnchor, anchor); // unchanged
+    });
+
+    test('spendLife at zero lives is a no-op', () {
+      final now = DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true);
+      final empty = const PlayerProgress.initial().copyWithLives(
+        lives: 0,
+        anchor: now,
+      );
+
+      expect(empty.spendLife(now: now.add(const Duration(minutes: 1))), empty);
+    });
+
     test('boolean values are not accepted by integer field helpers', () {
       final progress = PlayerProgress.fromMap({
         'schemaVersion': true,

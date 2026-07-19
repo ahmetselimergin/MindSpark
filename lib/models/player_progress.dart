@@ -1,3 +1,5 @@
+import 'package:mind_spark/game/domain/lives_state.dart';
+
 final class PlayerProgress {
   factory PlayerProgress({
     required int schemaVersion,
@@ -228,6 +230,19 @@ final class PlayerProgress {
       livesRegenAnchor: livesRegenAnchor,
       soundEnabled: soundEnabled,
       vibrationEnabled: vibrationEnabled,
+    );
+  }
+
+  /// Consumes one life. From a full tank this starts the regen clock at [now];
+  /// below full it keeps the running anchor. A no-op at zero lives.
+  PlayerProgress spendLife({required DateTime now}) {
+    if (lives <= 0) {
+      return this;
+    }
+    final startsClock = lives >= LivesRegen.maxLives;
+    return copyWithLives(
+      lives: lives - 1,
+      anchor: startsClock ? now.toUtc() : livesRegenAnchor,
     );
   }
 
