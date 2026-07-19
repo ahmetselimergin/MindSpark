@@ -4,6 +4,7 @@ import 'package:mind_spark/app/routes.dart';
 import 'package:mind_spark/core/theme/app_theme.dart';
 import 'package:mind_spark/features/home/home_screen.dart';
 import 'package:mind_spark/features/gameplay/gameplay_screen.dart';
+import 'package:mind_spark/features/out_of_lives/out_of_lives_screen.dart';
 import 'package:mind_spark/features/result/result_screen.dart';
 import 'package:mind_spark/features/settings/settings_screen.dart';
 import 'package:mind_spark/features/splash/splash_screen.dart';
@@ -59,6 +60,12 @@ Route<void> _onGenerateRoute(RouteSettings settings) {
       ResultRouteArgs(:final levelId, :final awardedScore)
           when levelId > 0 && awardedScore >= 0 =>
         ResultScreen(levelId: levelId, awardedScore: awardedScore),
+      _ => const _SafeRouteError(),
+    },
+    AppRoutes.outOfLives => switch (settings.arguments) {
+      OutOfLivesRouteArgs(:final levelId) when levelId > 0 => OutOfLivesScreen(
+        levelId: levelId,
+      ),
       _ => const _SafeRouteError(),
     },
     _ => const _SafeRouteError(),
