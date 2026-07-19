@@ -431,12 +431,7 @@ final class _GameplayView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  for (var i = 0; i < LivesRegen.maxLives; i++)
-                    Icon(
-                      i < lives ? Icons.favorite : Icons.favorite_border,
-                      color: AppColors.coralPulse,
-                      size: 16,
-                    ),
+                  HeartsRow(lives: lives, size: 16),
                 ],
               ),
               const SizedBox(height: 18),

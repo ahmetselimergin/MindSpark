@@ -40,6 +40,11 @@ Widget _harness(PlayerProgress stored, DateTime now) {
   );
 }
 
+int _fullHearts(WidgetTester tester) => tester
+    .widgetList<Opacity>(find.byType(Opacity))
+    .where((o) => o.opacity == 1.0)
+    .length;
+
 void main() {
   final t0 = DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true);
 
@@ -51,8 +56,7 @@ void main() {
     await tester.pumpWidget(_harness(stored, t0.add(const Duration(minutes: 1))));
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.favorite), findsNWidgets(1));
-    expect(find.byIcon(Icons.favorite_border), findsNWidgets(2));
+    expect(_fullHearts(tester), 1);
     expect(find.textContaining('Next life'), findsOneWidget);
   });
 
@@ -62,7 +66,7 @@ void main() {
     await tester.pumpWidget(_harness(const PlayerProgress.initial(), t0));
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.favorite), findsNWidgets(3));
+    expect(_fullHearts(tester), 3);
     expect(find.textContaining('Next life'), findsNothing);
   });
 
