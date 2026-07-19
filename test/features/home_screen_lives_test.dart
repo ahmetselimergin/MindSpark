@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mind_spark/app/app.dart';
+import 'package:mind_spark/core/theme/app_images.dart';
+import 'package:mind_spark/core/widgets/image_button.dart';
 import 'package:mind_spark/features/home/home_screen.dart';
 import 'package:mind_spark/models/level_model.dart';
 import 'package:mind_spark/models/player_progress.dart';
@@ -42,7 +44,13 @@ Widget _harness(PlayerProgress stored, DateTime now) {
 
 int _fullHearts(WidgetTester tester) => tester
     .widgetList<Opacity>(find.byType(Opacity))
-    .where((o) => o.opacity == 1.0)
+    .where((o) {
+      final child = o.child;
+      return o.opacity == 1.0 &&
+          child is Image &&
+          child.image is AssetImage &&
+          (child.image as AssetImage).assetName == AppImages.heart;
+    })
     .length;
 
 void main() {
@@ -78,9 +86,7 @@ void main() {
     await tester.pumpWidget(_harness(stored, t0.add(const Duration(minutes: 1))));
     await tester.pumpAndSettle();
 
-    final playButton = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'PLAY'),
-    );
+    final playButton = tester.widget<ImageButton>(find.byType(ImageButton));
     expect(playButton.onPressed, isNull); // disabled
   });
 }

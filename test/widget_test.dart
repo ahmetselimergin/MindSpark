@@ -98,7 +98,7 @@ void main() {
 
     expect(find.text('MindSpark'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(find.text('PLAY'), findsNothing);
+    expect(find.bySemanticsLabel('Play'), findsNothing);
   });
 
   testWidgets('splash explains a level load failure and retries', (
@@ -167,7 +167,7 @@ void main() {
     expect(levelAttempts, 2);
     expect(progressAttempts, 2);
     expect(find.text('Progress could not be loaded.'), findsOneWidget);
-    expect(find.text('PLAY'), findsNothing);
+    expect(find.bySemanticsLabel('Play'), findsNothing);
     expect(find.text('Best Score: 0'), findsNothing);
   });
 
@@ -182,7 +182,7 @@ void main() {
     expect(find.text('MindSpark'), findsOneWidget);
     expect(find.text('Level 1'), findsOneWidget);
     expect(find.text('Best Score: 0'), findsOneWidget);
-    expect(find.text('PLAY'), findsOneWidget);
+    expect(find.bySemanticsLabel('Play'), findsOneWidget);
   });
 }
 

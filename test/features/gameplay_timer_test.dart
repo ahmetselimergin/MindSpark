@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mind_spark/app/app.dart';
 import 'package:mind_spark/app/routes.dart';
+import 'package:mind_spark/core/widgets/image_button.dart';
 import 'package:mind_spark/features/gameplay/gameplay_screen.dart';
 import 'package:mind_spark/features/out_of_lives/out_of_lives_screen.dart';
 import 'package:mind_spark/models/level_model.dart';
@@ -71,8 +72,8 @@ void main() {
     await tester.pump();
 
     expect(repo.value.lives, 2); // a life was spent
-    expect(find.text('RETRY'), findsOneWidget);
-    expect(find.text('HOME'), findsOneWidget);
+    expect(find.text('HOME'), findsOneWidget); // dialog is up
+    expect(find.byType(ImageButton), findsOneWidget); // the RETRY button
   });
 
   testWidgets('expiry on the last life routes to Out-of-Lives', (tester) async {

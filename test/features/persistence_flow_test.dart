@@ -21,7 +21,7 @@ void main() {
       _testApp(repository: repository, harness: firstHarness),
     );
     await _pumpFrames(tester);
-    await tester.tap(find.text('PLAY'));
+    await tester.tap(find.bySemanticsLabel('Play'));
     await _pumpFrames(tester);
 
     firstHarness.completeLatest();

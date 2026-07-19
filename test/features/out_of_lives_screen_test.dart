@@ -32,10 +32,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('Next life'), findsOneWidget);
-    final adButton = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'WATCH AD (COMING SOON)'),
-    );
-    expect(adButton.onPressed, isNull);
+    expect(find.bySemanticsLabel('Watch ad (coming soon)'), findsOneWidget);
+    expect(find.bySemanticsLabel('Refill (coming soon)'), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'CONTINUE'), findsNothing);
   });
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mind_spark/app/routes.dart';
+import 'package:mind_spark/core/theme/app_images.dart';
+import 'package:mind_spark/core/widgets/image_button.dart';
 import 'package:mind_spark/state/app_progress_controller.dart';
 
 final class SettingsScreen extends ConsumerWidget {
@@ -19,11 +21,19 @@ final class SettingsScreen extends ConsumerWidget {
             : ListView(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 children: [
-                  SwitchListTile(
+                  ListTile(
                     title: const Text('Sound'),
-                    subtitle: const Text('Coming soon'),
-                    value: progress.soundEnabled,
-                    onChanged: controller.setSoundEnabled,
+                    trailing: Opacity(
+                      opacity: progress.soundEnabled ? 1 : 0.4,
+                      child: ImageButton(
+                        asset: AppImages.soundButton,
+                        semanticLabel: 'Sound',
+                        width: 48,
+                        height: 48,
+                        onPressed: () =>
+                            controller.setSoundEnabled(!progress.soundEnabled),
+                      ),
+                    ),
                   ),
                   SwitchListTile(
                     title: const Text('Vibration'),

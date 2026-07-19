@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mind_spark/app/routes.dart';
+import 'package:mind_spark/core/theme/app_images.dart';
+import 'package:mind_spark/core/widgets/image_button.dart';
 import 'package:mind_spark/core/widgets/lives_bar.dart';
 import 'package:mind_spark/game/domain/lives_state.dart';
 import 'package:mind_spark/state/app_progress_controller.dart';
@@ -64,9 +66,25 @@ class _OutOfLivesScreenState extends ConsumerState<OutOfLivesScreen> {
                     child: const Text('CONTINUE'),
                   )
                 else
-                  const FilledButton(
-                    onPressed: null,
-                    child: Text('WATCH AD (COMING SOON)'),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ImageButton(
+                        asset: AppImages.watchAddButton,
+                        semanticLabel: 'Watch ad (coming soon)',
+                        width: 96,
+                        height: 44,
+                        onPressed: null,
+                      ),
+                      const SizedBox(width: 16),
+                      ImageButton(
+                        asset: AppImages.refillButton,
+                        semanticLabel: 'Refill (coming soon)',
+                        width: 150,
+                        height: 56,
+                        onPressed: null,
+                      ),
+                    ],
                   ),
                 const SizedBox(height: 12),
                 TextButton(

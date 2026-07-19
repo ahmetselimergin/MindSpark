@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mind_spark/app/app.dart';
 import 'package:mind_spark/app/routes.dart';
+import 'package:mind_spark/core/theme/app_images.dart';
 import 'package:mind_spark/core/theme/app_theme.dart';
+import 'package:mind_spark/core/widgets/image_button.dart';
 import 'package:mind_spark/core/widgets/lives_bar.dart';
 import 'package:mind_spark/core/widgets/spark_trail.dart';
 import 'package:mind_spark/game/domain/lives_state.dart';
@@ -114,11 +116,14 @@ final class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       ),
                       SizedBox(height: compact ? 24 : 48),
-                      FilledButton(
+                      ImageButton(
+                        asset: AppImages.playButton,
+                        semanticLabel: 'Play',
+                        width: 220,
+                        height: 68,
                         onPressed: (_openingGame || livesNow <= 0)
                             ? null
                             : () => _openGame(currentLevel.id),
-                        child: const Text('PLAY'),
                       ),
                       if (livesNow <= 0) ...[
                         const SizedBox(height: 12),

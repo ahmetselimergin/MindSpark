@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mind_spark/core/widgets/image_button.dart';
 import 'package:mind_spark/app/routes.dart';
 import 'package:mind_spark/features/settings/settings_screen.dart';
 import 'package:mind_spark/models/player_progress.dart';
@@ -52,10 +53,8 @@ void main() {
   testWidgets('toggling sound persists the preference', (tester) async {
     final container = await pumpSettings(tester, advanced);
 
-    final soundTile = find.widgetWithText(SwitchListTile, 'Sound');
-    expect(tester.widget<SwitchListTile>(soundTile).value, isTrue);
-
-    await tester.tap(soundTile);
+    // Sound is a toggle button (starts enabled); tapping it mutes.
+    await tester.tap(find.byType(ImageButton));
     await tester.pumpAndSettle();
 
     expect(

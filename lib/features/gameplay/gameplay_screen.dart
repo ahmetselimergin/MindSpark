@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mind_spark/app/app.dart';
 import 'package:mind_spark/app/routes.dart';
+import 'package:mind_spark/core/theme/app_images.dart';
 import 'package:mind_spark/core/theme/app_theme.dart';
+import 'package:mind_spark/core/widgets/image_button.dart';
 import 'package:mind_spark/core/widgets/lives_bar.dart';
 import 'package:mind_spark/game/domain/lives_state.dart';
 import 'package:mind_spark/game/generation/level_timer.dart';
@@ -150,9 +152,12 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen>
             onPressed: () => Navigator.of(dialogContext).pop(false),
             child: const Text('HOME'),
           ),
-          FilledButton(
+          ImageButton(
+            asset: AppImages.replayButton,
+            semanticLabel: 'Retry',
+            width: 64,
+            height: 64,
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('RETRY'),
           ),
         ],
       ),

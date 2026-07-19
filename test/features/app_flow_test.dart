@@ -23,7 +23,7 @@ void main() {
     await tester.pumpWidget(_testApp(harness: harness));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('PLAY'));
+    await tester.tap(find.bySemanticsLabel('Play'));
     await _pumpRoute(tester);
 
     expect(find.text('Level 1'), findsWidgets);
@@ -51,7 +51,7 @@ void main() {
         _testApp(harness: harness, progressRepository: progress),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('PLAY'));
+      await tester.tap(find.bySemanticsLabel('Play'));
       await _pumpRoute(tester);
 
       harness.completeLatest();
@@ -88,7 +88,7 @@ void main() {
       _testApp(harness: harness, progressRepository: progress),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('PLAY'));
+    await tester.tap(find.bySemanticsLabel('Play'));
     await _pumpRoute(tester);
 
     harness.completeLatest();
@@ -108,7 +108,7 @@ void main() {
       _testApp(harness: harness, progressRepository: progress),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('PLAY'));
+    await tester.tap(find.bySemanticsLabel('Play'));
     await _pumpRoute(tester);
 
     harness.completeLatest();
@@ -140,7 +140,7 @@ void main() {
       _testApp(harness: harness, progressRepository: progress),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('PLAY'));
+    await tester.tap(find.bySemanticsLabel('Play'));
     await _pumpRoute(tester);
     harness.completeLatest();
     await _pumpRoute(tester);
@@ -169,7 +169,7 @@ void main() {
       _testApp(harness: harness, progressRepository: progress),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('PLAY'));
+    await tester.tap(find.bySemanticsLabel('Play'));
     await _pumpRoute(tester);
     harness.completeLatest();
     await _pumpRoute(tester);
@@ -202,7 +202,7 @@ void main() {
       _testApp(harness: harness, progressRepository: progress),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('PLAY'));
+    await tester.tap(find.bySemanticsLabel('Play'));
     await _pumpRoute(tester);
     harness.completeLatest();
     await _pumpRoute(tester);
@@ -242,7 +242,7 @@ void main() {
         _testApp(harness: harness, progressRepository: progress),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('PLAY'));
+      await tester.tap(find.bySemanticsLabel('Play'));
       await _pumpRoute(tester);
 
       harness.completeLatest();
@@ -340,7 +340,7 @@ void main() {
 
       expect(find.text('Levels could not be loaded.'), findsOneWidget);
       expect(find.text('RETRY'), findsOneWidget);
-      expect(find.text('PLAY'), findsNothing);
+      expect(find.bySemanticsLabel('Play'), findsNothing);
     },
   );
 
@@ -374,7 +374,7 @@ void main() {
       await tester.tap(find.byTooltip('Main menu'));
       await tester.pumpAndSettle();
 
-      expect(find.text('PLAY'), findsOneWidget);
+      expect(find.bySemanticsLabel('Play'), findsOneWidget);
     },
   );
 
@@ -383,7 +383,7 @@ void main() {
     await tester.pumpWidget(_testApp(harness: _GameHarness()));
     await tester.pumpAndSettle();
 
-    expect(find.text('PLAY'), findsOneWidget);
+    expect(find.bySemanticsLabel('Play'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -391,7 +391,7 @@ void main() {
     final harness = _GameHarness();
     await tester.pumpWidget(_testApp(harness: harness));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('PLAY'));
+    await tester.tap(find.bySemanticsLabel('Play'));
     await _pumpRoute(tester);
     tester.takeException();
     _useCompactLargeTextView(tester);
@@ -405,7 +405,7 @@ void main() {
     final harness = _GameHarness();
     await tester.pumpWidget(_testApp(harness: harness));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('PLAY'));
+    await tester.tap(find.bySemanticsLabel('Play'));
     await _pumpRoute(tester);
     harness.completeLatest();
     await _pumpRoute(tester);
@@ -423,9 +423,7 @@ void main() {
     await tester.pumpWidget(_testApp(harness: harness));
     await tester.pumpAndSettle();
 
-    final play = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'PLAY'),
-    );
+    final play = tester.widget<ImageButton>(find.byType(ImageButton));
     play.onPressed!();
     play.onPressed!();
     await _pumpRoute(tester);
@@ -439,7 +437,7 @@ void main() {
     final harness = _GameHarness();
     await tester.pumpWidget(_testApp(harness: harness));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('PLAY'));
+    await tester.tap(find.bySemanticsLabel('Play'));
     await _pumpRoute(tester);
     harness.completeLatest();
     await _pumpRoute(tester);
