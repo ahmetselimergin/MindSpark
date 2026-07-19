@@ -6,11 +6,12 @@ void main() {
     test('initial progress uses schema defaults', () {
       const progress = PlayerProgress.initial();
 
-      expect(progress.schemaVersion, 1);
+      expect(progress.schemaVersion, 2);
       expect(progress.highestUnlockedLevel, 1);
       expect(progress.completedLevelIds, isEmpty);
       expect(progress.totalScore, 0);
-      expect(progress.lives, 3);
+      expect(progress.lives, 5);
+      expect(progress.livesRegenAnchor, isNull);
       expect(progress.soundEnabled, isTrue);
       expect(progress.vibrationEnabled, isTrue);
     });
@@ -82,7 +83,7 @@ void main() {
       final cases = <(String, Object?)>[
         ('record', 'not a map'),
         ('schemaVersion', {...valid, 'schemaVersion': true}),
-        ('schemaVersion', {...valid, 'schemaVersion': 2}),
+        ('schemaVersion', {...valid, 'schemaVersion': 3}),
         ('highestUnlockedLevel', {...valid, 'highestUnlockedLevel': 0}),
         ('completedLevelIds', {...valid, 'completedLevelIds': '1'}),
         (
@@ -110,6 +111,7 @@ void main() {
         ('totalScore', {...valid, 'totalScore': -1}),
         ('totalScore', {...valid, 'totalScore': 0}),
         ('lives', {...valid, 'lives': -1}),
+        ('lives', {...valid, 'lives': 6}),
         ('soundEnabled', {...valid, 'soundEnabled': 1}),
         ('vibrationEnabled', {...valid, 'vibrationEnabled': null}),
       ];
@@ -132,7 +134,7 @@ void main() {
     test('strict persisted parsing accepts and owns a set representation', () {
       final callerOwnedIds = <int>{1};
       final progress = PlayerProgress.fromPersistedMap({
-        'schemaVersion': 1,
+        'schemaVersion': 2,
         'highestUnlockedLevel': 1,
         'completedLevelIds': callerOwnedIds,
         'totalScore': 100,
@@ -167,7 +169,7 @@ void main() {
           highestUnlockedLevel: 1,
           completedLevelIds: {1, 4},
           totalScore: 0,
-          lives: 3,
+          lives: 5,
           soundEnabled: true,
           vibrationEnabled: true,
         ),
@@ -179,36 +181,66 @@ void main() {
       );
     });
 
-    test('normalizes every unsupported schema version to version one', () {
-      for (final unsupported in <Object?>[
-        2,
-        99,
-        0,
-        -1,
-        true,
-        false,
-        1.0,
-        '1',
-      ]) {
+    test('stamps the current schema version (2) on every constructed record', () {
+      for (final raw in <Object?>[99, 0, -1, true, false, 1.0, '1', 1]) {
         expect(
-          PlayerProgress.fromMap({'schemaVersion': unsupported}).schemaVersion,
-          1,
-          reason: 'schemaVersion: $unsupported',
+          PlayerProgress.fromMap({'schemaVersion': raw}).schemaVersion,
+          2,
+          reason: 'schemaVersion: $raw',
         );
       }
-
       expect(
         PlayerProgress(
           schemaVersion: 2,
           highestUnlockedLevel: 1,
           completedLevelIds: const {},
           totalScore: 0,
-          lives: 3,
+          lives: 5,
           soundEnabled: true,
           vibrationEnabled: true,
         ).schemaVersion,
-        1,
+        2,
       );
+    });
+
+    test('round-trips a v2 record carrying a regen anchor', () {
+      final anchor = DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true);
+      final record = <Object?, Object?>{
+        'schemaVersion': 2,
+        'highestUnlockedLevel': 4,
+        'completedLevelIds': <int>[1, 2, 3],
+        'totalScore': 300,
+        'lives': 2,
+        'livesRegenAnchor': anchor.millisecondsSinceEpoch,
+        'soundEnabled': true,
+        'vibrationEnabled': true,
+      };
+
+      final progress = PlayerProgress.fromPersistedMap(record);
+
+      expect(progress.lives, 2);
+      expect(progress.livesRegenAnchor, anchor);
+      expect(PlayerProgress.fromPersistedMap(progress.toMap()), progress);
+    });
+
+    test('migrates a persisted v1 record: keeps progress, refills lives to 5', () {
+      final progress = PlayerProgress.fromPersistedMap(<Object?, Object?>{
+        'schemaVersion': 1,
+        'highestUnlockedLevel': 6,
+        'completedLevelIds': <int>[1, 2, 3, 4, 5],
+        'totalScore': 500,
+        'lives': 2,
+        'soundEnabled': false,
+        'vibrationEnabled': true,
+      });
+
+      expect(progress.schemaVersion, 2);
+      expect(progress.highestUnlockedLevel, 6);
+      expect(progress.completedLevelIds, {1, 2, 3, 4, 5});
+      expect(progress.totalScore, 500);
+      expect(progress.lives, 5); // refilled
+      expect(progress.livesRegenAnchor, isNull);
+      expect(progress.soundEnabled, isFalse);
     });
 
     test('boolean values are not accepted by integer field helpers', () {

@@ -95,10 +95,31 @@ void main() {
     });
 
     test('rejects unsupported persisted schema versions', () async {
-      await _putRecord(box!, schemaVersion: 2);
+      await _putRecord(box!, schemaVersion: 3);
 
       expect(await repository!.load(), const PlayerProgress.initial());
       expect(diagnostics.single.field, 'schemaVersion');
+    });
+
+    test('migrates a persisted v1 record and refills lives to 5', () async {
+      await box!.put('playerProgress', <String, Object>{
+        'schemaVersion': 1,
+        'highestUnlockedLevel': 3,
+        'completedLevelIds': const <int>[1, 2],
+        'totalScore': 200,
+        'lives': 2,
+        'soundEnabled': true,
+        'vibrationEnabled': true,
+      });
+
+      final loaded = await repository!.load();
+
+      expect(loaded.schemaVersion, 2);
+      expect(loaded.highestUnlockedLevel, 3);
+      expect(loaded.completedLevelIds, {1, 2});
+      expect(loaded.lives, 5);
+      expect(loaded.livesRegenAnchor, isNull);
+      expect(diagnostics, isEmpty);
     });
 
     test('rejects inconsistent IDs, score, and unlock atomically', () async {

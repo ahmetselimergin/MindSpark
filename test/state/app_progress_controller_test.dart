@@ -90,7 +90,7 @@ void main() {
       expect(progress.highestUnlockedLevel, 1);
       expect(progress.completedLevelIds, isEmpty);
       expect(progress.totalScore, 0);
-      expect(progress.lives, 3);
+      expect(progress.lives, 5);
       expect(progress.soundEnabled, isFalse); // preserved
       expect(progress.vibrationEnabled, isFalse); // preserved
       expect(repository.saved.last, progress);

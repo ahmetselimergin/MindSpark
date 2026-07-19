@@ -5,6 +5,7 @@ final class PlayerProgress {
     required Set<int> completedLevelIds,
     required int totalScore,
     required int lives,
+    DateTime? livesRegenAnchor,
     required bool soundEnabled,
     required bool vibrationEnabled,
   }) {
@@ -14,6 +15,7 @@ final class PlayerProgress {
       completedLevelIds: Set<int>.unmodifiable(completedLevelIds),
       totalScore: totalScore,
       lives: lives,
+      livesRegenAnchor: livesRegenAnchor,
       soundEnabled: soundEnabled,
       vibrationEnabled: vibrationEnabled,
     );
@@ -25,17 +27,19 @@ final class PlayerProgress {
     required this.completedLevelIds,
     required this.totalScore,
     required this.lives,
+    required this.livesRegenAnchor,
     required this.soundEnabled,
     required this.vibrationEnabled,
   });
 
   const PlayerProgress.initial()
     : this._(
-        schemaVersion: 1,
+        schemaVersion: 2,
         highestUnlockedLevel: 1,
         completedLevelIds: const <int>{},
         totalScore: 0,
-        lives: 3,
+        lives: 5,
+        livesRegenAnchor: null,
         soundEnabled: true,
         vibrationEnabled: true,
       );
@@ -57,7 +61,8 @@ final class PlayerProgress {
       ),
       completedLevelIds: Set<int>.unmodifiable(completedLevelIds),
       totalScore: _nonNegativeInt(map['totalScore'], fallback: 0),
-      lives: _nonNegativeInt(map['lives'], fallback: 3),
+      lives: _boundedLives(map['lives']),
+      livesRegenAnchor: _anchorFromMillis(map['livesRegenAnchor']),
       soundEnabled: map['soundEnabled'] is bool
           ? map['soundEnabled']! as bool
           : true,
@@ -76,10 +81,10 @@ final class PlayerProgress {
     }
 
     final schemaVersion = _requiredInt(record, 'schemaVersion');
-    if (schemaVersion != 1) {
+    if (schemaVersion != 1 && schemaVersion != 2) {
       throw const ProgressFormatException(
         field: 'schemaVersion',
-        message: 'must be exactly 1',
+        message: 'must be 1 or 2',
       );
     }
 
@@ -108,19 +113,26 @@ final class PlayerProgress {
     }
 
     final lives = _requiredInt(record, 'lives');
-    if (lives < 0) {
+    if (lives < 0 || lives > 5) {
       throw const ProgressFormatException(
         field: 'lives',
-        message: 'must be nonnegative',
+        message: 'must be between 0 and 5',
       );
     }
 
+    // v1 records predate lives regen: give a full tank and preserve progress.
+    final migratedLives = schemaVersion == 1 ? 5 : lives;
+    final anchor = schemaVersion == 1
+        ? null
+        : _persistedAnchor(record, migratedLives);
+
     return PlayerProgress(
-      schemaVersion: schemaVersion,
+      schemaVersion: 2,
       highestUnlockedLevel: highestUnlockedLevel,
       completedLevelIds: completedLevelIds,
       totalScore: totalScore,
-      lives: lives,
+      lives: migratedLives,
+      livesRegenAnchor: anchor,
       soundEnabled: _requiredBool(record, 'soundEnabled'),
       vibrationEnabled: _requiredBool(record, 'vibrationEnabled'),
     );
@@ -131,13 +143,14 @@ final class PlayerProgress {
   final Set<int> completedLevelIds;
   final int totalScore;
   final int lives;
+  final DateTime? livesRegenAnchor;
   final bool soundEnabled;
   final bool vibrationEnabled;
 
   Map<String, Object> toMap() {
     final sortedCompletedLevelIds = completedLevelIds.toList()..sort();
-    return {
-      'schemaVersion': schemaVersion,
+    final map = <String, Object>{
+      'schemaVersion': 2,
       'highestUnlockedLevel': highestUnlockedLevel,
       'completedLevelIds': sortedCompletedLevelIds,
       'totalScore': totalScore,
@@ -145,6 +158,11 @@ final class PlayerProgress {
       'soundEnabled': soundEnabled,
       'vibrationEnabled': vibrationEnabled,
     };
+    final anchor = livesRegenAnchor;
+    if (anchor != null) {
+      map['livesRegenAnchor'] = anchor.toUtc().millisecondsSinceEpoch;
+    }
+    return map;
   }
 
   PlayerProgress copyWith({
@@ -161,8 +179,24 @@ final class PlayerProgress {
       completedLevelIds: completedLevelIds ?? this.completedLevelIds,
       totalScore: totalScore ?? this.totalScore,
       lives: lives ?? this.lives,
+      livesRegenAnchor: livesRegenAnchor,
       soundEnabled: soundEnabled ?? this.soundEnabled,
       vibrationEnabled: vibrationEnabled ?? this.vibrationEnabled,
+    );
+  }
+
+  /// Copies the record while setting both the life count and the regen anchor —
+  /// including back to `null`, which the general [copyWith] cannot express.
+  PlayerProgress copyWithLives({required int lives, required DateTime? anchor}) {
+    return PlayerProgress(
+      schemaVersion: schemaVersion,
+      highestUnlockedLevel: highestUnlockedLevel,
+      completedLevelIds: completedLevelIds,
+      totalScore: totalScore,
+      lives: lives,
+      livesRegenAnchor: anchor,
+      soundEnabled: soundEnabled,
+      vibrationEnabled: vibrationEnabled,
     );
   }
 
@@ -191,6 +225,7 @@ final class PlayerProgress {
       completedLevelIds: Set<int>.unmodifiable(updatedCompletedLevelIds),
       totalScore: totalScore + (isFirstCompletion ? 100 : 0),
       lives: lives,
+      livesRegenAnchor: livesRegenAnchor,
       soundEnabled: soundEnabled,
       vibrationEnabled: vibrationEnabled,
     );
@@ -205,6 +240,7 @@ final class PlayerProgress {
             _setsEqual(completedLevelIds, other.completedLevelIds) &&
             totalScore == other.totalScore &&
             lives == other.lives &&
+            livesRegenAnchor == other.livesRegenAnchor &&
             soundEnabled == other.soundEnabled &&
             vibrationEnabled == other.vibrationEnabled;
   }
@@ -216,6 +252,7 @@ final class PlayerProgress {
     Object.hashAllUnordered(completedLevelIds),
     totalScore,
     lives,
+    livesRegenAnchor,
     soundEnabled,
     vibrationEnabled,
   );
@@ -278,8 +315,31 @@ int _positiveInt(Object? value, {required int fallback}) {
   return value is int && value > 0 ? value : fallback;
 }
 
-int _schemaVersion(Object? value) {
-  return value is int && value == 1 ? value : 1;
+/// The current persisted schema version. Every constructed record is stamped
+/// with it, so in-memory objects always speak the latest schema.
+int _schemaVersion(Object? value) => 2;
+
+int _boundedLives(Object? value) => value is int ? value.clamp(0, 5) : 5;
+
+DateTime? _anchorFromMillis(Object? value) => value is int
+    ? DateTime.fromMillisecondsSinceEpoch(value, isUtc: true)
+    : null;
+
+DateTime? _persistedAnchor(Map<Object?, Object?> record, int lives) {
+  final raw = record['livesRegenAnchor'];
+  if (lives >= 5) {
+    return null; // full ⇒ no regen in progress
+  }
+  if (raw == null) {
+    return null; // healed to `now` on first reconcile
+  }
+  if (raw is! int) {
+    throw const ProgressFormatException(
+      field: 'livesRegenAnchor',
+      message: 'must be an integer or absent',
+    );
+  }
+  return DateTime.fromMillisecondsSinceEpoch(raw, isUtc: true);
 }
 
 int _nonNegativeInt(Object? value, {required int fallback}) {
