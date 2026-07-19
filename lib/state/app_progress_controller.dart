@@ -1,9 +1,22 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mind_spark/game/domain/lives_state.dart';
 import 'package:mind_spark/models/player_progress.dart';
 import 'package:mind_spark/repositories/progress_repository.dart';
 
 final progressRepositoryProvider = Provider<ProgressRepository>(
   (ref) => InMemoryProgressRepository(),
+);
+
+/// The wall clock, injectable for deterministic tests. Millisecond-precision
+/// UTC so persisted anchors round-trip and compare stably.
+final clockProvider = Provider<DateTime Function()>(
+  (ref) => () {
+    final now = DateTime.now();
+    return DateTime.fromMillisecondsSinceEpoch(
+      now.millisecondsSinceEpoch,
+      isUtc: true,
+    );
+  },
 );
 
 final appProgressControllerProvider =
@@ -49,6 +62,51 @@ final class AppProgressController extends AsyncNotifier<PlayerProgress> {
       return;
     }
 
+    state = AsyncData(candidate);
+    await _save(candidate);
+  }
+
+  DateTime _now() => ref.read(clockProvider)();
+
+  Future<void> spendLife({DateTime? now}) {
+    return _enqueueMutation(() => _spendLife(now ?? _now()));
+  }
+
+  Future<void> _spendLife(DateTime now) async {
+    final current = state.value;
+    if (current == null) {
+      return;
+    }
+    final candidate = current.spendLife(now: now);
+    if (candidate == current) {
+      return;
+    }
+    state = AsyncData(candidate);
+    await _save(candidate);
+  }
+
+  Future<void> reconcileLives({DateTime? now}) {
+    return _enqueueMutation(() => _reconcileLives(now ?? _now()));
+  }
+
+  Future<void> _reconcileLives(DateTime now) async {
+    final current = state.value;
+    if (current == null) {
+      return;
+    }
+    final result = LivesRegen.reconcile(
+      lives: current.lives,
+      anchor: current.livesRegenAnchor,
+      now: now,
+    );
+    if (result.lives == current.lives &&
+        result.anchor == current.livesRegenAnchor) {
+      return;
+    }
+    final candidate = current.copyWithLives(
+      lives: result.lives,
+      anchor: result.anchor,
+    );
     state = AsyncData(candidate);
     await _save(candidate);
   }

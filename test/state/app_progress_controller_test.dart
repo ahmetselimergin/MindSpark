@@ -249,6 +249,71 @@ void main() {
         const PlayerProgress.initial(),
       );
     });
+
+    test('spendLife decrements and starts the clock from full', () async {
+      final now = DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true);
+      final repository = RecordingProgressRepository(); // initial: 5 lives
+      final container = _containerWithClock(repository, () => now);
+      addTearDown(container.dispose);
+      final controller = container.read(appProgressControllerProvider.notifier);
+      await container.read(appProgressControllerProvider.future);
+
+      await controller.spendLife();
+
+      final progress = container
+          .read(appProgressControllerProvider)
+          .requireValue;
+      expect(progress.lives, 4);
+      expect(progress.livesRegenAnchor, now);
+      expect(repository.saved.last, progress);
+    });
+
+    test('reconcileLives grants elapsed lives and persists once', () async {
+      final anchor = DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true);
+      final stored = const PlayerProgress.initial().copyWithLives(
+        lives: 2,
+        anchor: anchor,
+      );
+      final repository = RecordingProgressRepository(stored);
+      final now = anchor.add(const Duration(minutes: 21));
+      final container = _containerWithClock(repository, () => now);
+      addTearDown(container.dispose);
+      final controller = container.read(appProgressControllerProvider.notifier);
+      await container.read(appProgressControllerProvider.future);
+
+      await controller.reconcileLives();
+
+      final progress = container
+          .read(appProgressControllerProvider)
+          .requireValue;
+      expect(progress.lives, 4);
+      expect(progress.livesRegenAnchor, anchor.add(const Duration(minutes: 20)));
+      expect(repository.saved, hasLength(1));
+    });
+
+    test('reconcileLives is a no-op within the same window (no write)', () async {
+      final anchor = DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true);
+      final stored = const PlayerProgress.initial().copyWithLives(
+        lives: 2,
+        anchor: anchor,
+      );
+      final repository = RecordingProgressRepository(stored);
+      final container = _containerWithClock(
+        repository,
+        () => anchor.add(const Duration(minutes: 3)),
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appProgressControllerProvider.notifier);
+      await container.read(appProgressControllerProvider.future);
+
+      await controller.reconcileLives();
+
+      expect(repository.saved, isEmpty);
+      expect(
+        container.read(appProgressControllerProvider).requireValue.lives,
+        2,
+      );
+    });
   });
 }
 
@@ -264,6 +329,18 @@ Future<bool> _isCompleted(Future<void> future) async {
 ProviderContainer _container(ProgressRepository repository) {
   return ProviderContainer(
     overrides: [progressRepositoryProvider.overrideWithValue(repository)],
+  );
+}
+
+ProviderContainer _containerWithClock(
+  ProgressRepository repository,
+  DateTime Function() clock,
+) {
+  return ProviderContainer(
+    overrides: [
+      progressRepositoryProvider.overrideWithValue(repository),
+      clockProvider.overrideWithValue(clock),
+    ],
   );
 }
 
