@@ -4,10 +4,17 @@ abstract final class AppRoutes {
   static const gameplay = '/gameplay';
   static const result = '/result';
   static const settings = '/settings';
+  static const outOfLives = '/out-of-lives';
 }
 
 final class GameplayRouteArgs {
   const GameplayRouteArgs(this.levelId);
+
+  final int levelId;
+}
+
+final class OutOfLivesRouteArgs {
+  const OutOfLivesRouteArgs(this.levelId);
 
   final int levelId;
 }

@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mind_spark/app/app.dart';
 import 'package:mind_spark/app/routes.dart';
 import 'package:mind_spark/core/theme/app_theme.dart';
+import 'package:mind_spark/core/widgets/lives_bar.dart';
 import 'package:mind_spark/core/widgets/spark_trail.dart';
+import 'package:mind_spark/game/domain/lives_state.dart';
 import 'package:mind_spark/state/app_progress_controller.dart';
 
 final class HomeScreen extends ConsumerStatefulWidget {
@@ -17,8 +19,24 @@ final class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _openingGame = false;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(appProgressControllerProvider.notifier).reconcileLives();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final progress = ref.watch(appProgressControllerProvider).requireValue;
+    final now = ref.read(clockProvider)();
+    final livesNow = LivesRegen.reconcile(
+      lives: progress.lives,
+      anchor: progress.livesRegenAnchor,
+      now: now,
+    ).lives;
     final levelState = ref.watch(levelByIdProvider(progress.highestUnlockedLevel));
     final currentLevel = levelState.value;
     if (levelState.hasError) {
@@ -60,6 +78,8 @@ final class _HomeScreenState extends ConsumerState<HomeScreen> {
                         style: Theme.of(context).textTheme.headlineMedium
                             ?.copyWith(fontSize: 30, letterSpacing: -.4),
                       ),
+                      const SizedBox(height: 12),
+                      const LivesBar(),
                       SizedBox(height: compact ? 20 : 46),
                       SizedBox(
                         width: double.infinity,
@@ -95,11 +115,21 @@ final class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       SizedBox(height: compact ? 24 : 48),
                       FilledButton(
-                        onPressed: _openingGame
+                        onPressed: (_openingGame || livesNow <= 0)
                             ? null
                             : () => _openGame(currentLevel.id),
                         child: const Text('PLAY'),
                       ),
+                      if (livesNow <= 0) ...[
+                        const SizedBox(height: 12),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pushNamed(
+                            AppRoutes.outOfLives,
+                            arguments: OutOfLivesRouteArgs(currentLevel.id),
+                          ),
+                          child: const Text('OUT OF LIVES'),
+                        ),
+                      ],
                     ],
                   ),
                 ),
