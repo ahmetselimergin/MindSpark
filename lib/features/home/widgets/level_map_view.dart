@@ -53,15 +53,19 @@ class _LevelMapViewState extends ConsumerState<LevelMapView> {
   Offset _center(int index) =>
       Offset(_left(index) + kLevelCardWidth / 2, _top(index) + kLevelCardHeight / 2);
 
-  Future<void> _play(int id) async {
+  /// Single-flight route push: guards against a synchronous double-tap opening
+  /// the same destination twice, and always resets [_opening] via try/finally.
+  Future<void> _open(String route, Object args) async {
     if (_opening) {
       return;
     }
     setState(() => _opening = true);
-    await Navigator.of(context)
-        .pushNamed(AppRoutes.gameplay, arguments: GameplayRouteArgs(id));
-    if (mounted) {
-      setState(() => _opening = false);
+    try {
+      await Navigator.of(context).pushNamed(route, arguments: args);
+    } finally {
+      if (mounted) {
+        setState(() => _opening = false);
+      }
     }
   }
 
@@ -70,11 +74,10 @@ class _LevelMapViewState extends ConsumerState<LevelMapView> {
       return;
     }
     if (livesNow <= 0) {
-      Navigator.of(context)
-          .pushNamed(AppRoutes.outOfLives, arguments: OutOfLivesRouteArgs(id));
+      _open(AppRoutes.outOfLives, OutOfLivesRouteArgs(id));
       return;
     }
-    _play(id);
+    _open(AppRoutes.gameplay, GameplayRouteArgs(id));
   }
 
   void _centerCurrent(int currentIndex, double viewportWidth) {

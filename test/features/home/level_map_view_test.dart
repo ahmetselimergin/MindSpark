@@ -9,6 +9,21 @@ import 'package:mind_spark/models/player_progress.dart';
 import 'package:mind_spark/repositories/progress_repository.dart';
 import 'package:mind_spark/state/app_progress_controller.dart';
 
+/// Counts route pushes keyed by route name, to assert a synchronous
+/// double-tap opens a destination exactly once.
+class _PushCounter extends NavigatorObserver {
+  final Map<String, int> pushes = <String, int>{};
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    final name = route.settings.name;
+    if (name != null) {
+      pushes[name] = (pushes[name] ?? 0) + 1;
+    }
+    super.didPush(route, previousRoute);
+  }
+}
+
 PlayerProgress _progress({
   required int highest,
   Set<int> completed = const {},
@@ -29,7 +44,11 @@ PlayerProgress _progress({
   );
 }
 
-Widget _harness(PlayerProgress stored, DateTime now) {
+Widget _harness(
+  PlayerProgress stored,
+  DateTime now, {
+  List<NavigatorObserver> observers = const [],
+}) {
   return ProviderScope(
     overrides: [
       progressRepositoryProvider
@@ -37,6 +56,7 @@ Widget _harness(PlayerProgress stored, DateTime now) {
       clockProvider.overrideWithValue(() => now),
     ],
     child: MaterialApp(
+      navigatorObservers: observers,
       onGenerateRoute: (settings) => MaterialPageRoute<void>(
         settings: settings,
         builder: (_) => switch (settings.name) {
@@ -156,5 +176,52 @@ void main() {
     await tester.pumpAndSettle();
     expect(container.read(celebrateLevelProvider), isNull);
     expect(find.byType(StatusBadge), findsNothing);
+  });
+
+  testWidgets('double-tapping the current card opens gameplay only once', (
+    tester,
+  ) async {
+    final counter = _PushCounter();
+    await tester.pumpWidget(
+      _harness(_progress(highest: 1), t0, observers: [counter]),
+    );
+    await tester.pumpAndSettle();
+
+    final card = tester.widget<LevelCard>(
+      find.byWidgetPredicate(
+        (w) => w is LevelCard && w.status == LevelCardStatus.current,
+      ),
+    );
+    card.onTap!();
+    card.onTap!();
+    await tester.pumpAndSettle();
+
+    expect(counter.pushes[AppRoutes.gameplay], 1);
+    expect(find.text('GAMEPLAY 1'), findsOneWidget);
+  });
+
+  testWidgets('double-tapping the current card with zero lives routes '
+      'to out-of-lives only once', (tester) async {
+    final counter = _PushCounter();
+    await tester.pumpWidget(
+      _harness(
+        _progress(highest: 1, lives: 0, anchor: t0),
+        t0.add(const Duration(minutes: 1)),
+        observers: [counter],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final card = tester.widget<LevelCard>(
+      find.byWidgetPredicate(
+        (w) => w is LevelCard && w.status == LevelCardStatus.current,
+      ),
+    );
+    card.onTap!();
+    card.onTap!();
+    await tester.pumpAndSettle();
+
+    expect(counter.pushes[AppRoutes.outOfLives], 1);
+    expect(find.text('OUT OF LIVES 1'), findsOneWidget);
   });
 }
