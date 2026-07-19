@@ -24,4 +24,24 @@ void main() {
       }
     });
   });
+
+  group('starsForResult', () {
+    Duration s(int n) => Duration(seconds: n);
+    test('thresholds', () {
+      expect(starsForResult(remaining: s(70), timeLimit: s(100)), 3);
+      expect(starsForResult(remaining: s(69), timeLimit: s(100)), 2);
+      expect(starsForResult(remaining: s(40), timeLimit: s(100)), 2);
+      expect(starsForResult(remaining: s(39), timeLimit: s(100)), 1);
+      expect(starsForResult(remaining: s(0), timeLimit: s(100)), 1);
+    });
+    test('full time is 3 stars', () {
+      expect(starsForResult(remaining: s(100), timeLimit: s(100)), 3);
+    });
+    test('zero or negative limit yields 1', () {
+      expect(starsForResult(remaining: s(0), timeLimit: Duration.zero), 1);
+    });
+    test('clamps over-full remaining to 3', () {
+      expect(starsForResult(remaining: s(200), timeLimit: s(100)), 3);
+    });
+  });
 }
