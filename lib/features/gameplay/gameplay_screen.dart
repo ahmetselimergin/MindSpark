@@ -261,6 +261,7 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen>
     if (!mounted) {
       return;
     }
+    ref.read(celebrateLevelProvider.notifier).state = widget.levelId;
     final savedState = ref.read(appProgressControllerProvider);
     final after = savedState.value;
     _awardedScore =

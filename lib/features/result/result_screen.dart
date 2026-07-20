@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mind_spark/app/routes.dart';
 import 'package:mind_spark/core/theme/app_images.dart';
 import 'package:mind_spark/core/widgets/image_button.dart';
+import 'package:mind_spark/core/widgets/status_badge.dart';
 import 'package:mind_spark/state/app_progress_controller.dart';
 
 final class ResultScreen extends ConsumerStatefulWidget {
@@ -50,6 +51,13 @@ final class _ResultScreenState extends ConsumerState<ResultScreen> {
                         child: Image.asset(
                           AppImages.wonBoard,
                           fit: BoxFit.contain,
+                        ),
+                      ),
+                      Align(
+                        alignment: const Alignment(0, -0.78),
+                        child: FractionallySizedBox(
+                          widthFactor: 0.6,
+                          child: StatusBadge(stars: widget.stars),
                         ),
                       ),
                       Align(

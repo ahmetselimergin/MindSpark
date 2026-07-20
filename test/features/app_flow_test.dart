@@ -9,6 +9,7 @@ import 'package:mind_spark/app/routes.dart';
 import 'package:mind_spark/core/widgets/image_button.dart';
 import 'package:mind_spark/features/gameplay/gameplay_screen.dart';
 import 'package:mind_spark/features/home/widgets/level_card.dart';
+import 'package:mind_spark/features/result/result_screen.dart';
 import 'package:mind_spark/game/mind_spark_game.dart';
 import 'package:mind_spark/models/level_model.dart';
 import 'package:mind_spark/models/player_progress.dart';
@@ -57,6 +58,11 @@ void main() {
 
       harness.completeLatest();
       await _pumpRoute(tester);
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(ResultScreen)),
+      );
+      expect(container.read(celebrateLevelProvider), 1);
 
       expect(find.bySemanticsLabel('Next level'), findsOneWidget);
       expect(find.textContaining('+100'), findsOneWidget);
