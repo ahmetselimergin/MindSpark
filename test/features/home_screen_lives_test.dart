@@ -86,4 +86,25 @@ void main() {
 
     expect(find.text('OUT OF LIVES'), findsOneWidget);
   });
+
+  testWidgets('shows total stars top-left, lives, and a settings button', (
+    tester,
+  ) async {
+    final stored = PlayerProgress(
+      schemaVersion: 3,
+      highestUnlockedLevel: 4,
+      completedLevelIds: const {1, 2, 3},
+      totalScore: 300,
+      lives: 3,
+      levelStars: const {1: 3, 2: 3, 3: 2}, // total 8
+      soundEnabled: true,
+      vibrationEnabled: true,
+    );
+    await tester.pumpWidget(_harness(stored, t0));
+    await tester.pumpAndSettle();
+
+    expect(find.bySemanticsLabel('Total stars 8'), findsOneWidget);
+    expect(find.byTooltip('Settings'), findsOneWidget);
+    expect(_fullHearts(tester), 3);
+  });
 }
