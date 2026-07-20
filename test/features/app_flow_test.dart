@@ -8,6 +8,7 @@ import 'package:mind_spark/app/app.dart';
 import 'package:mind_spark/app/routes.dart';
 import 'package:mind_spark/core/widgets/image_button.dart';
 import 'package:mind_spark/features/gameplay/gameplay_screen.dart';
+import 'package:mind_spark/features/home/widgets/level_card.dart';
 import 'package:mind_spark/game/mind_spark_game.dart';
 import 'package:mind_spark/models/level_model.dart';
 import 'package:mind_spark/models/player_progress.dart';
@@ -255,7 +256,7 @@ void main() {
 
       await tester.tap(find.byTooltip('Main menu'));
       await tester.pumpAndSettle();
-      expect(find.text('Best Score: 200'), findsOneWidget);
+      expect(find.bySemanticsLabel('Play'), findsOneWidget);
     },
   );
 
@@ -423,9 +424,13 @@ void main() {
     await tester.pumpWidget(_testApp(harness: harness));
     await tester.pumpAndSettle();
 
-    final play = tester.widget<ImageButton>(find.byType(ImageButton));
-    play.onPressed!();
-    play.onPressed!();
+    final current = tester.widget<LevelCard>(
+      find.byWidgetPredicate(
+        (w) => w is LevelCard && w.status == LevelCardStatus.current,
+      ),
+    );
+    current.onTap!();
+    current.onTap!();
     await _pumpRoute(tester);
 
     expect(harness.games, hasLength(1));

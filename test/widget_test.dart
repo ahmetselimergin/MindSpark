@@ -36,7 +36,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(attempts, 2);
-    expect(find.text('Level 1'), findsOneWidget);
+    expect(find.bySemanticsLabel('Play'), findsOneWidget);
   });
 
   testWidgets('rapid bootstrap retry starts one initializer and mounts once', (
@@ -125,7 +125,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(attempts, 2);
-    expect(find.text('Level 1'), findsOneWidget);
+    expect(find.bySemanticsLabel('Play'), findsOneWidget);
   });
 
   testWidgets('splash does not navigate with retained data on retry error', (
@@ -180,8 +180,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('MindSpark'), findsOneWidget);
-    expect(find.text('Level 1'), findsOneWidget);
-    expect(find.text('Best Score: 0'), findsOneWidget);
+    expect(find.text('1'), findsOneWidget); // current-level card number
     expect(find.bySemanticsLabel('Play'), findsOneWidget);
   });
 }

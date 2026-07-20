@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mind_spark/app/app.dart';
 import 'package:mind_spark/app/routes.dart';
 import 'package:mind_spark/core/theme/app_images.dart';
 import 'package:mind_spark/core/theme/app_theme.dart';
-import 'package:mind_spark/core/widgets/image_button.dart';
 import 'package:mind_spark/core/widgets/lives_bar.dart';
 import 'package:mind_spark/core/widgets/spark_trail.dart';
-import 'package:mind_spark/game/domain/lives_state.dart';
+import 'package:mind_spark/features/home/widgets/level_map_view.dart';
+import 'package:mind_spark/models/player_progress.dart';
 import 'package:mind_spark/state/app_progress_controller.dart';
 
 final class HomeScreen extends ConsumerStatefulWidget {
@@ -18,8 +17,6 @@ final class HomeScreen extends ConsumerStatefulWidget {
 }
 
 final class _HomeScreenState extends ConsumerState<HomeScreen> {
-  bool _openingGame = false;
-
   @override
   void initState() {
     super.initState();
@@ -32,143 +29,70 @@ final class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final progress = ref.watch(appProgressControllerProvider).requireValue;
-    final now = ref.read(clockProvider)();
-    final livesNow = LivesRegen.reconcile(
-      lives: progress.lives,
-      anchor: progress.livesRegenAnchor,
-      now: now,
-    ).lives;
-    final levelState = ref.watch(levelByIdProvider(progress.highestUnlockedLevel));
-    final currentLevel = levelState.value;
-    if (levelState.hasError) {
-      return _HomeContentError(
-        onRetry: () {
-          ref.invalidate(levelByIdProvider(progress.highestUnlockedLevel));
-          ref.invalidate(appProgressControllerProvider);
-        },
-      );
-    }
-    if (currentLevel == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    return Scaffold(
-      body: SafeArea(
-        child: Stack(
-          children: [
-            LayoutBuilder(
-          builder: (context, constraints) {
-            final compact = constraints.maxHeight < 700;
-            return SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: compact ? 12 : 24,
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const SparkTrail(),
-                      SizedBox(height: compact ? 8 : 16),
-                      Text(
-                        'MindSpark',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.headlineMedium
-                            ?.copyWith(fontSize: 30, letterSpacing: -.4),
-                      ),
-                      const SizedBox(height: 12),
-                      const LivesBar(),
-                      SizedBox(height: compact ? 20 : 46),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            '${currentLevel.id}',
-                            style: Theme.of(context).textTheme.displayLarge
-                                ?.copyWith(
-                                  fontSize: 112,
-                                  height: .85,
-                                  color: AppColors.sparkYellow,
-                                ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Level ${currentLevel.id}',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontSize: 22,
-                          letterSpacing: .8,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Best Score: ${progress.totalScore}',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.frost.withAlpha(190),
-                        ),
-                      ),
-                      SizedBox(height: compact ? 24 : 48),
-                      ImageButton(
-                        asset: AppImages.playButton,
-                        semanticLabel: 'Play',
-                        width: 220,
-                        height: 68,
-                        onPressed: (_openingGame || livesNow <= 0)
-                            ? null
-                            : () => _openGame(currentLevel.id),
-                      ),
-                      if (livesNow <= 0) ...[
-                        const SizedBox(height: 12),
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pushNamed(
-                            AppRoutes.outOfLives,
-                            arguments: OutOfLivesRouteArgs(currentLevel.id),
-                          ),
-                          child: const Text('OUT OF LIVES'),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-            ),
-            Align(
-              alignment: Alignment.topRight,
-              child: IconButton(
-                icon: const Icon(Icons.settings_rounded),
-                color: AppColors.frost,
-                tooltip: 'Settings',
-                onPressed: () =>
-                    Navigator.of(context).pushNamed(AppRoutes.settings),
-              ),
-            ),
-          ],
-        ),
+    final progressAsync = ref.watch(appProgressControllerProvider);
+    return progressAsync.when(
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (_, _) => _HomeContentError(
+        onRetry: () => ref.invalidate(appProgressControllerProvider),
       ),
+      data: (progress) => _buildHome(context, progress),
     );
   }
 
-  Future<void> _openGame(int levelId) async {
-    if (_openingGame) {
-      return;
-    }
-    setState(() => _openingGame = true);
-    await Navigator.of(
-      context,
-    ).pushNamed(AppRoutes.gameplay, arguments: GameplayRouteArgs(levelId));
-    if (mounted) {
-      setState(() => _openingGame = false);
-    }
+  Widget _buildHome(BuildContext context, PlayerProgress progress) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(AppImages.background, fit: BoxFit.cover),
+          ),
+          SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxHeight < 700;
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: compact ? 12 : 24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SparkTrail(),
+                          SizedBox(height: compact ? 8 : 16),
+                          Text(
+                            'MindSpark',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.headlineMedium
+                                ?.copyWith(fontSize: 30, letterSpacing: -.4),
+                          ),
+                          const SizedBox(height: 12),
+                          const LivesBar(),
+                          SizedBox(height: compact ? 16 : 32),
+                          const SizedBox(height: 220, child: LevelMapView()),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          Align(
+            alignment: Alignment.topRight,
+            child: IconButton(
+              icon: const Icon(Icons.settings_rounded),
+              color: AppColors.frost,
+              tooltip: 'Settings',
+              onPressed: () =>
+                  Navigator.of(context).pushNamed(AppRoutes.settings),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -193,7 +117,7 @@ final class _HomeContentError extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  'Saved progress does not match the available levels.',
+                  'Saved progress could not be loaded.',
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
