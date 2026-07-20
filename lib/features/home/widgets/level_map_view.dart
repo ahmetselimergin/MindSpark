@@ -103,9 +103,13 @@ class _LevelMapViewState extends ConsumerState<LevelMapView> {
     final count = highest + kLockedTeaser;
     final currentIndex = highest - 1;
 
-    // Consume the celebration flag exactly once.
+    // Consume the celebration flag exactly once, and only once this map is
+    // the visible route: gameplay pushes on top of (rather than replacing)
+    // home, so a dormant home instance stays mounted underneath and would
+    // otherwise steal the flag before the player ever sees it.
     final celebrate = ref.watch(celebrateLevelProvider);
-    if (celebrate != null) {
+    final isCurrentRoute = ModalRoute.of(context)?.isCurrent ?? true;
+    if (celebrate != null && isCurrentRoute) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) {
           return;
