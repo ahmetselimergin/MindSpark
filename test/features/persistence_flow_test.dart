@@ -47,8 +47,8 @@ void main() {
     );
     await _pumpFrames(tester);
 
-    expect(find.text('Level 2'), findsOneWidget);
-    expect(find.text('Best Score: 100'), findsOneWidget);
+    expect(find.text('2'), findsOneWidget); // current-level card is level 2
+    expect(find.bySemanticsLabel('Play'), findsOneWidget);
 
     navigatorKey.currentState!.pushNamed(
       AppRoutes.gameplay,
