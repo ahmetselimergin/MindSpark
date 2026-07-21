@@ -10,9 +10,16 @@ import 'domain/puzzle_session.dart';
 import 'domain/puzzle_snapshot.dart';
 
 final class MindSparkGame extends FlameGame with DragCallbacks {
-  MindSparkGame({required LevelModel level, required VoidCallback onCompleted})
-    : _level = level,
-      _session = PuzzleSession(level: level, onCompleted: onCompleted);
+  MindSparkGame({
+    required LevelModel level,
+    required VoidCallback onCompleted,
+    VoidCallback? onAllPairsConnected,
+  }) : _level = level,
+       _session = PuzzleSession(
+         level: level,
+         onCompleted: onCompleted,
+         onAllPairsConnected: onAllPairsConnected,
+       );
 
   static const Map<String, Color> _palette = {
     'red': Color(0xFFE84545),
