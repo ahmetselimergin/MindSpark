@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:mind_spark/app/app.dart';
 import 'package:mind_spark/core/theme/app_theme.dart';
@@ -11,6 +14,15 @@ typedef ProgressRepositoryInitializer = Future<ProgressRepository> Function();
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  // Child-directed request config must be applied before any ad is requested.
+  MobileAds.instance.updateRequestConfiguration(
+    RequestConfiguration(
+      maxAdContentRating: MaxAdContentRating.g,
+      tagForChildDirectedTreatment: TagForChildDirectedTreatment.yes,
+      tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.yes,
+    ),
+  );
+  unawaited(MobileAds.instance.initialize());
   runApp(const ProgressBootstrap(initializer: initializeProgressRepository));
 }
 
