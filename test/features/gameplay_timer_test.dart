@@ -73,7 +73,13 @@ void main() {
 
     expect(repo.value.lives, 2); // a life was spent
     expect(find.text('HOME'), findsOneWidget); // dialog is up
-    expect(find.byType(ImageButton), findsOneWidget); // the RETRY button
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is ImageButton && w.semanticLabel == 'Retry',
+      ),
+      findsOneWidget,
+    ); // the RETRY button in the dialog
+
   });
 
   testWidgets('expiry on the last life routes to Out-of-Lives', (tester) async {
