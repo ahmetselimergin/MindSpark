@@ -3,6 +3,7 @@ abstract final class AppImages {
   static const String nextButton = 'assets/ui/nextbutton.png';
   static const String heart = 'assets/ui/heart.png';
   static const String replayButton = 'assets/ui/replaybutton.png';
+  static const String homeButton = 'assets/ui/homebutton.png';
   static const String refillButton = 'assets/ui/refillbutton.png';
   static const String watchAddButton = 'assets/ui/watchaddbutton.png';
   static const String soundButton = 'assets/ui/soundbutton.png';

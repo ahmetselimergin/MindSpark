@@ -29,7 +29,7 @@ void main() {
     await _pumpRoute(tester);
 
     expect(find.text('Level 1'), findsWidgets);
-    expect(find.text('RESTART'), findsOneWidget);
+    expect(find.bySemanticsLabel('Restart'), findsOneWidget);
     expect(harness.games, hasLength(1));
 
     final game = harness.games.single;
@@ -37,7 +37,7 @@ void main() {
     expect(game.handlePointerStart(Vector2.all(25)), isTrue);
     expect(game.snapshot.paths['blue']?.cells, hasLength(1));
 
-    await tester.tap(find.text('RESTART'));
+    await tester.tap(find.bySemanticsLabel('Restart'));
     await tester.pump();
 
     expect(game.snapshot.paths['blue'], isNull);
@@ -70,7 +70,7 @@ void main() {
       expect(progress.saved.single.completedLevelIds, {1});
       expect(find.bySemanticsLabel('Next level'), findsOneWidget);
 
-      tester.widget<ImageButton>(find.byType(ImageButton)).onPressed!();
+      tester.widget<ImageButton>(find.byWidgetPredicate((w) => w is ImageButton && w.semanticLabel == 'Next level')).onPressed!();
       await _pumpRoute(tester);
 
       expect(find.text('Level 2'), findsOneWidget);
@@ -404,7 +404,7 @@ void main() {
     _useCompactLargeTextView(tester);
     await tester.pump();
 
-    expect(find.text('RESTART'), findsOneWidget);
+    expect(find.bySemanticsLabel('Restart'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -453,7 +453,7 @@ void main() {
     harness.completeLatest();
     await _pumpRoute(tester);
 
-    final next = tester.widget<ImageButton>(find.byType(ImageButton));
+    final next = tester.widget<ImageButton>(find.byWidgetPredicate((w) => w is ImageButton && w.semanticLabel == 'Next level'));
     next.onPressed!();
     next.onPressed!();
     await _pumpRoute(tester);

@@ -221,7 +221,6 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen>
       levelId: widget.levelId,
       game: game,
       remaining: _remaining,
-      timeLimit: _timeLimit,
       lives: ref.watch(appProgressControllerProvider).value?.lives ?? 0,
       saveFailed: _saveFailed,
       needsProgressReload: _needsProgressReload,
@@ -362,7 +361,6 @@ final class _GameplayView extends StatelessWidget {
     required this.levelId,
     required this.game,
     required this.remaining,
-    required this.timeLimit,
     required this.lives,
     required this.saveFailed,
     required this.needsProgressReload,
@@ -374,7 +372,6 @@ final class _GameplayView extends StatelessWidget {
   final int levelId;
   final MindSparkGame game;
   final Duration remaining;
-  final Duration timeLimit;
   final int lives;
   final bool saveFailed;
   final bool needsProgressReload;
@@ -390,61 +387,79 @@ final class _GameplayView extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
           child: Column(
             children: [
-              Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 12,
-                runSpacing: 4,
-                children: [
-                  Text(
-                    'Level $levelId',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.headlineMedium?.copyWith(fontSize: 28),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.home_rounded),
-                    color: AppColors.frost,
-                    onPressed: () => Navigator.of(
-                      context,
-                    ).pushNamedAndRemoveUntil(AppRoutes.home, (_) => false),
-                  ),
-                  TextButton(
-                    onPressed: onRestart,
-                    child: const Text('RESTART'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Flexible(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
+                  // Left: level number.
+                  Expanded(
+                    child: Align(
                       alignment: Alignment.centerLeft,
-                      child: Text(
-                        formatCountdown(remaining),
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontSize: 20,
-                          color: remaining.inSeconds <= 10
-                              ? AppColors.coralPulse
-                              : AppColors.frost,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Level $levelId',
+                          style: Theme.of(context).textTheme.headlineMedium
+                              ?.copyWith(fontSize: 24),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  // Center: countdown as plain text (no progress bar).
                   Expanded(
-                    child: LinearProgressIndicator(
-                      value: timeLimit.inMilliseconds == 0
-                          ? 0
-                          : (remaining.inMilliseconds / timeLimit.inMilliseconds)
-                                .clamp(0.0, 1.0),
-                      backgroundColor: AppColors.deepCircuit,
+                    child: Center(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          formatCountdown(remaining),
+                          style: Theme.of(context).textTheme.headlineMedium
+                              ?.copyWith(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w800,
+                                color: remaining.inSeconds <= 10
+                                    ? AppColors.coralPulse
+                                    : AppColors.frost,
+                              ),
+                        ),
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  HeartsRow(lives: lives, size: 16),
+                  // Right: replay + home buttons, with lives below them.
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ImageButton(
+                              asset: AppImages.replayButton,
+                              semanticLabel: 'Restart',
+                              width: 40,
+                              height: 40,
+                              onPressed: onRestart,
+                            ),
+                            const SizedBox(width: 8),
+                            ImageButton(
+                              asset: AppImages.homeButton,
+                              semanticLabel: 'Home',
+                              width: 40,
+                              height: 40,
+                              onPressed: () => Navigator.of(context)
+                                  .pushNamedAndRemoveUntil(
+                                    AppRoutes.home,
+                                    (_) => false,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        HeartsRow(lives: lives, size: 18),
+                      ],
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 18),
