@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
@@ -33,20 +32,15 @@ final class _AdBannerSlotState extends State<AdBannerSlot> {
       return;
     }
     _requested = true;
-    unawaited(_loadBanner());
+    _loadBanner();
   }
 
-  Future<void> _loadBanner() async {
-    final width = MediaQuery.of(context).size.width.truncate();
-    final size =
-        await AdSize.getLargeAnchoredAdaptiveBannerAdSize(width) ??
-        AdSize.banner;
-    if (!mounted) {
-      return;
-    }
+  // Fixed 320x50 banner so it always fits the reserved slot with no layout
+  // shift; adaptive sizing can exceed the slot height on large screens.
+  void _loadBanner() {
     final banner = BannerAd(
       adUnitId: _kBannerAdUnitId,
-      size: size,
+      size: AdSize.banner,
       request: const AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (_) {
@@ -58,7 +52,7 @@ final class _AdBannerSlotState extends State<AdBannerSlot> {
       ),
     );
     _banner = banner;
-    await banner.load();
+    banner.load();
   }
 
   @override
