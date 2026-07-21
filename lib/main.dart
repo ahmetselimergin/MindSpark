@@ -2,27 +2,22 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:mind_spark/app/app.dart';
 import 'package:mind_spark/core/theme/app_theme.dart';
 import 'package:mind_spark/repositories/hive_progress_repository.dart';
 import 'package:mind_spark/repositories/progress_repository.dart';
 import 'package:mind_spark/state/app_progress_controller.dart';
+import 'package:yandex_mobileads/mobile_ads.dart';
 
 typedef ProgressRepositoryInitializer = Future<ProgressRepository> Function();
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // Child-directed request config must be applied before any ad is requested.
-  MobileAds.instance.updateRequestConfiguration(
-    RequestConfiguration(
-      maxAdContentRating: MaxAdContentRating.g,
-      tagForChildDirectedTreatment: TagForChildDirectedTreatment.yes,
-      tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.yes,
-    ),
-  );
-  unawaited(MobileAds.instance.initialize());
+  // Child-directed: request age-restricted (kids-appropriate) ads. Yandex has
+  // no client COPPA flag beyond this; content rating is set in the AN panel.
+  unawaited(YandexAds.setAgeRestricted(true));
+  unawaited(YandexAds.initialize());
   runApp(const ProgressBootstrap(initializer: initializeProgressRepository));
 }
 

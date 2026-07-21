@@ -19,9 +19,8 @@ android {
         applicationId = "com.mindspark.mind_spark"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        // google_mobile_ads 9.0.0 requires minSdk 24; brief specified 23 but the
-        // resolved package build requires the higher value (see task-1-report.md).
-        minSdk = 24
+        // yandex_mobileads 8.2.0 requires a minimum Android minSdk of 23.
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

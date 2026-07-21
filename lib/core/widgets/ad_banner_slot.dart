@@ -1,13 +1,13 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:yandex_mobileads/mobile_ads.dart';
 
 /// Fixed slot height so the gameplay layout never shifts as the ad loads.
 const double _kBannerSlotHeight = 60;
 
-// TODO: replace this test banner ad unit id with the real one before release.
-const String _kBannerAdUnitId = 'ca-app-pub-3940256099942544/6300978111';
+/// Yandex Advertising Network banner block id for Mind Spark (Android).
+const String _kBannerBlockId = 'R-M-19628695-1';
 
 /// Bottom-of-screen banner slot shown during gameplay. Renders an empty
 /// reserved box under `flutter test` and never touches the ads plugin there.
@@ -20,7 +20,6 @@ final class AdBannerSlot extends StatefulWidget {
 
 final class _AdBannerSlotState extends State<AdBannerSlot> {
   BannerAd? _banner;
-  bool _loaded = false;
   bool _requested = false;
 
   bool get _adsDisabled => Platform.environment.containsKey('FLUTTER_TEST');
@@ -32,32 +31,19 @@ final class _AdBannerSlotState extends State<AdBannerSlot> {
       return;
     }
     _requested = true;
-    _loadBanner();
-  }
-
-  // Fixed 320x50 banner so it always fits the reserved slot with no layout
-  // shift; adaptive sizing can exceed the slot height on large screens.
-  void _loadBanner() {
+    // Inline banner capped to 50dp high so it always fits the reserved slot;
+    // the Yandex AdWidget resizes itself to the loaded ad's actual height.
+    final width = MediaQuery.of(context).size.width.truncate();
     final banner = BannerAd(
-      adUnitId: _kBannerAdUnitId,
-      size: AdSize.banner,
-      request: const AdRequest(),
-      listener: BannerAdListener(
-        onAdLoaded: (_) {
-          if (mounted) {
-            setState(() => _loaded = true);
-          }
-        },
-        onAdFailedToLoad: (ad, error) => ad.dispose(),
-      ),
+      adSize: BannerAdSize.inline(width: width, maxHeight: 50),
     );
+    banner.load(const AdRequest(adUnitId: _kBannerBlockId));
     _banner = banner;
-    banner.load();
   }
 
   @override
   void dispose() {
-    _banner?.dispose();
+    _banner?.destroy();
     super.dispose();
   }
 
@@ -66,15 +52,9 @@ final class _AdBannerSlotState extends State<AdBannerSlot> {
     final banner = _banner;
     return SizedBox(
       height: _kBannerSlotHeight,
-      child: (_loaded && banner != null)
-          ? Center(
-              child: SizedBox(
-                width: banner.size.width.toDouble(),
-                height: banner.size.height.toDouble(),
-                child: AdWidget(ad: banner),
-              ),
-            )
-          : const SizedBox.shrink(),
+      child: banner == null
+          ? const SizedBox.shrink()
+          : Center(child: AdWidget(bannerAd: banner)),
     );
   }
 }
