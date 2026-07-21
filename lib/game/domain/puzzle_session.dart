@@ -9,9 +9,10 @@ final class PuzzleSession {
   factory PuzzleSession({
     required LevelModel level,
     void Function()? onCompleted,
-  }) => PuzzleSession._(level, onCompleted);
+    void Function()? onAllPairsConnected,
+  }) => PuzzleSession._(level, onCompleted, onAllPairsConnected);
 
-  PuzzleSession._(this._level, this._onCompleted) {
+  PuzzleSession._(this._level, this._onCompleted, this._onAllPairsConnected) {
     for (final point in _level.points) {
       final position = GridPosition(point.x, point.y);
       _endpointColors[position] = point.color;
@@ -21,6 +22,7 @@ final class PuzzleSession {
 
   final LevelModel _level;
   final void Function()? _onCompleted;
+  final void Function()? _onAllPairsConnected;
   final Map<GridPosition, String> _endpointColors = {};
   final Map<String, List<GridPosition>> _endpointsByColor = {};
   final Map<String, _MutablePath> _paths = {};
@@ -48,6 +50,10 @@ final class PuzzleSession {
       _paths.length == _endpointsByColor.length &&
       _paths.values.every((path) => path.connected) &&
       _coveredCellCount == _level.size * _level.size;
+
+  bool get _allPairsConnected =>
+      _paths.length == _endpointsByColor.length &&
+      _paths.values.every((path) => path.connected);
 
   /// Total cells occupied across all paths. Paths never overlap (see
   /// [_isOccupied]), so this equals the number of distinct covered cells.
@@ -104,6 +110,8 @@ final class PuzzleSession {
       if (isComplete) {
         _inputLocked = true;
         _onCompleted?.call();
+      } else if (_allPairsConnected) {
+        _onAllPairsConnected?.call();
       }
     }
     return true;

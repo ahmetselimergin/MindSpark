@@ -499,9 +499,17 @@ final class _GameHarness {
   final List<MindSparkGame> games = [];
   final List<VoidCallback> completions = [];
 
-  MindSparkGame create(LevelModel level, VoidCallback onCompleted) {
+  MindSparkGame create(
+    LevelModel level,
+    VoidCallback onCompleted,
+    VoidCallback onAllPairsConnected,
+  ) {
     completions.add(onCompleted);
-    final game = MindSparkGame(level: level, onCompleted: onCompleted);
+    final game = MindSparkGame(
+      level: level,
+      onCompleted: onCompleted,
+      onAllPairsConnected: onAllPairsConnected,
+    );
     games.add(game);
     return game;
   }

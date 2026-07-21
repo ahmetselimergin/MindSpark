@@ -269,6 +269,55 @@ void main() {
       expect(completionCount, 2);
     });
   });
+
+  group('PuzzleSession stuck signal', () {
+    test('fires onAllPairsConnected when all pairs connect but cells remain', () {
+      var stuckCount = 0;
+      final session = PuzzleSession(
+        level: _level,
+        onAllPairsConnected: () => stuckCount++,
+      );
+
+      _connectRed(session);
+      expect(stuckCount, 0); // only one of two pairs connected so far
+
+      _connectBlue(session); // both pairs connected, middle row still empty
+      expect(stuckCount, 1);
+      expect(session.isComplete, isFalse);
+    });
+
+    test('does not fire onAllPairsConnected when the board is completed', () {
+      var stuckCount = 0;
+      var completionCount = 0;
+      final session = PuzzleSession(
+        level: _fillLevel,
+        onCompleted: () => completionCount++,
+        onAllPairsConnected: () => stuckCount++,
+      );
+
+      _fillBoard(session);
+
+      expect(completionCount, 1);
+      expect(stuckCount, 0);
+    });
+
+    test('fires again after restart and re-entering the stuck state', () {
+      var stuckCount = 0;
+      final session = PuzzleSession(
+        level: _level,
+        onAllPairsConnected: () => stuckCount++,
+      );
+
+      _connectRed(session);
+      _connectBlue(session);
+      expect(stuckCount, 1);
+
+      session.restart();
+      _connectRed(session);
+      _connectBlue(session);
+      expect(stuckCount, 2);
+    });
+  });
 }
 
 void _connectRed(PuzzleSession session) {

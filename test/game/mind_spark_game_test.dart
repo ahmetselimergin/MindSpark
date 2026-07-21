@@ -338,10 +338,56 @@ void main() {
 
     recorder.endRecording();
   });
+
+  test(
+    'forwards onAllPairsConnected when pairs connect but the board is unfilled',
+    () {
+      var stuckCount = 0;
+      final game = MindSparkGame(
+        level: _stuckLevel(),
+        onCompleted: () {},
+        onAllPairsConnected: () => stuckCount++,
+      )..onGameResize(Vector2.all(300)); // 3x3 board → 100px cells
+
+      game.handlePointerStart(_cellCenter(0, 0));
+      game.handlePointerUpdate(_cellCenter(2, 0)); // red across the top row
+      game.handlePointerEnd();
+      expect(stuckCount, 0);
+
+      game.handlePointerStart(_cellCenter(0, 2));
+      game.handlePointerUpdate(_cellCenter(2, 2)); // blue across the bottom row
+      game.handlePointerEnd();
+
+      expect(stuckCount, 1);
+      expect(game.snapshot.isComplete, isFalse);
+    },
+  );
+
+  test('does not forward onAllPairsConnected on full completion', () {
+    var stuckCount = 0;
+    final game = MindSparkGame(
+      level: _fillLevel(),
+      onCompleted: () {},
+      onAllPairsConnected: () => stuckCount++,
+    )..onGameResize(Vector2.all(500));
+
+    _completeLevel(game);
+
+    expect(game.snapshot.isComplete, isTrue);
+    expect(stuckCount, 0);
+  });
 }
 
-MindSparkGame _game({LevelModel? level, void Function()? onCompleted}) =>
-    MindSparkGame(level: level ?? _level(), onCompleted: onCompleted ?? () {});
+MindSparkGame _game({
+  LevelModel? level,
+  void Function()? onCompleted,
+  void Function()? onAllPairsConnected,
+}) =>
+    MindSparkGame(
+      level: level ?? _level(),
+      onCompleted: onCompleted ?? () {},
+      onAllPairsConnected: onAllPairsConnected,
+    );
 
 LevelModel _level() => const LevelModel(
   id: 1,
@@ -390,6 +436,19 @@ LevelModel _backtrackingLevel() => const LevelModel(
   points: [
     GridPoint(x: 0, y: 0, color: 'purple'),
     GridPoint(x: 4, y: 4, color: 'purple'),
+  ],
+);
+
+// A 3x3 board whose direct pair connections leave the middle row empty, so
+// connecting both pairs reaches "all pairs connected" without full coverage.
+LevelModel _stuckLevel() => const LevelModel(
+  id: 6,
+  size: 3,
+  points: [
+    GridPoint(x: 0, y: 0, color: 'red'),
+    GridPoint(x: 2, y: 0, color: 'red'),
+    GridPoint(x: 0, y: 2, color: 'blue'),
+    GridPoint(x: 2, y: 2, color: 'blue'),
   ],
 );
 
