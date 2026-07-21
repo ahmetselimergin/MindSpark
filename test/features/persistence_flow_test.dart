@@ -97,9 +97,17 @@ Widget _testApp({
 final class _GameHarness {
   final List<VoidCallback> completions = [];
 
-  MindSparkGame create(LevelModel level, VoidCallback onCompleted) {
+  MindSparkGame create(
+    LevelModel level,
+    VoidCallback onCompleted,
+    VoidCallback onAllPairsConnected,
+  ) {
     completions.add(onCompleted);
-    return MindSparkGame(level: level, onCompleted: onCompleted);
+    return MindSparkGame(
+      level: level,
+      onCompleted: onCompleted,
+      onAllPairsConnected: onAllPairsConnected,
+    );
   }
 
   void completeLatest() => completions.last();

@@ -7,8 +7,10 @@ import 'package:mind_spark/app/app.dart';
 import 'package:mind_spark/app/routes.dart';
 import 'package:mind_spark/core/theme/app_images.dart';
 import 'package:mind_spark/core/theme/app_theme.dart';
+import 'package:mind_spark/core/widgets/ad_banner_slot.dart';
 import 'package:mind_spark/core/widgets/image_button.dart';
 import 'package:mind_spark/core/widgets/lives_bar.dart';
+import 'package:mind_spark/core/widgets/stuck_hint_flash.dart';
 import 'package:mind_spark/game/domain/lives_state.dart';
 import 'package:mind_spark/game/generation/level_timer.dart';
 import 'package:mind_spark/game/mind_spark_game.dart';
@@ -16,12 +18,19 @@ import 'package:mind_spark/models/level_model.dart';
 import 'package:mind_spark/state/app_progress_controller.dart';
 
 typedef MindSparkGameFactory =
-    MindSparkGame Function(LevelModel level, VoidCallback onCompleted);
+    MindSparkGame Function(
+      LevelModel level,
+      VoidCallback onCompleted,
+      VoidCallback onAllPairsConnected,
+    );
 
 final mindSparkGameFactoryProvider = Provider<MindSparkGameFactory>(
   (ref) =>
-      (level, onCompleted) =>
-          MindSparkGame(level: level, onCompleted: onCompleted),
+      (level, onCompleted, onAllPairsConnected) => MindSparkGame(
+        level: level,
+        onCompleted: onCompleted,
+        onAllPairsConnected: onAllPairsConnected,
+      ),
 );
 
 /// The per-level time budget, injectable so tests can shorten it.
@@ -54,6 +63,7 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen>
   bool _paused = false;
   bool _timerStarted = false;
   bool _redirectedOutOfLives = false;
+  int _stuckFlashTick = 0;
 
   @override
   void initState() {
@@ -90,6 +100,13 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen>
     _timeLimit = ref.read(levelTimerProvider)(boardSize);
     _remaining = _timeLimit;
     _countdown = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+  }
+
+  void _handleAllPairsConnected() {
+    if (!mounted) {
+      return;
+    }
+    setState(() => _stuckFlashTick++);
   }
 
   void _tick() {
@@ -207,6 +224,7 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen>
     final game = _game = ref.read(mindSparkGameFactoryProvider)(
       level,
       _handleCompletion,
+      _handleAllPairsConnected,
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -225,6 +243,7 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen>
       saveFailed: _saveFailed,
       needsProgressReload: _needsProgressReload,
       saving: _saving,
+      stuckFlashTick: _stuckFlashTick,
       onRestart: game.restart,
       onRetry: _needsProgressReload ? _retryProgress : _retrySave,
     );
@@ -365,6 +384,7 @@ final class _GameplayView extends StatelessWidget {
     required this.saveFailed,
     required this.needsProgressReload,
     required this.saving,
+    required this.stuckFlashTick,
     required this.onRestart,
     required this.onRetry,
   });
@@ -376,6 +396,7 @@ final class _GameplayView extends StatelessWidget {
   final bool saveFailed;
   final bool needsProgressReload;
   final bool saving;
+  final int stuckFlashTick;
   final VoidCallback onRestart;
   final VoidCallback onRetry;
 
@@ -464,17 +485,32 @@ final class _GameplayView extends StatelessWidget {
               ),
               const SizedBox(height: 18),
               Expanded(
-                child: Center(
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(22),
-                      child: ColoredBox(
-                        color: AppColors.deepCircuit,
-                        child: GameWidget(game: game),
+                child: Stack(
+                  children: [
+                    Center(
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(22),
+                          child: ColoredBox(
+                            color: AppColors.deepCircuit,
+                            child: GameWidget(game: game),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 8,
+                      child: Center(
+                        child: StuckHintFlash(
+                          trigger: stuckFlashTick,
+                          message: 'All linked — now fill every square!',
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 18),
@@ -485,13 +521,7 @@ final class _GameplayView extends StatelessWidget {
                   onRetry: onRetry,
                 )
               else
-                Text(
-                  'Connect matching sparks to fill the board.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.frost.withAlpha(180),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+                const AdBannerSlot(),
             ],
           ),
         ),
