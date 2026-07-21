@@ -39,7 +39,7 @@ final class _AdBannerSlotState extends State<AdBannerSlot> {
   Future<void> _loadBanner() async {
     final width = MediaQuery.of(context).size.width.truncate();
     final size =
-        await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(width) ??
+        await AdSize.getLargeAnchoredAdaptiveBannerAdSize(width) ??
         AdSize.banner;
     if (!mounted) {
       return;
