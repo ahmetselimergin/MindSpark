@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:mind_spark/app/app.dart';
+import 'package:mind_spark/core/widgets/ad_banner_slot.dart';
 import 'package:mind_spark/features/gameplay/gameplay_screen.dart';
 import 'package:mind_spark/game/mind_spark_game.dart';
 import 'package:mind_spark/models/level_model.dart';
@@ -64,6 +65,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Connect matching sparks to fill the board.'), findsNothing);
+    expect(find.byType(AdBannerSlot), findsOneWidget);
     expect(find.byType(AdWidget), findsNothing); // ads are no-op under test
   });
 

@@ -63,19 +63,21 @@ final class _StuckHintFlashState extends State<StuckHintFlash>
     if (!_visible) {
       return const SizedBox.shrink();
     }
-    return FadeTransition(
-      opacity: _opacity,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.deepCircuit.withAlpha(230),
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Text(
-          widget.message,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppColors.frost,
-            fontWeight: FontWeight.w700,
+    return IgnorePointer(
+      child: FadeTransition(
+        opacity: _opacity,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.deepCircuit.withAlpha(230),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            widget.message,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColors.frost,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ),
