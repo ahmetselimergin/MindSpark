@@ -17,6 +17,6 @@
 
 ## Task 3 — Integration and delivery
 
-- [ ] Review the complete diff against current main.
-- [ ] Re-run analyzer, full tests, debug APK build, and diff check.
-- [ ] Merge without touching the user's uncommitted iOS/market files.
+- [x] Review the complete diff against current main.
+- [x] Re-run analyzer, full tests, debug APK build, and diff check.
+- [x] Merge without touching the user's uncommitted iOS/market files.

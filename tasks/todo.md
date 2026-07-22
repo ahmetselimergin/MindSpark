@@ -21,6 +21,7 @@
 - Renderer inceleme düzeltmesi iki güvenli boş hücrede exact panel/alternate renklerini doğruluyor.
 - 320×568 + 2× metin ve 412×915 board-talimat yakınlığı testleri geçti; Pixel 10 Pro üzerinde bağlı yol render'ı görsel olarak incelendi.
 - Son taze kapılar: `flutter analyze` temiz, `flutter test` 199/199, `flutter build apk --debug` başarılı ve `git diff --check` temiz. Build yalnız mevcut Yandex KGP gelecek-uyumluluk uyarısını üretiyor.
+- Tam `ec6b117..9e02b23` incelemesi P0–P3 bulgusuz tamamlandı; güncel main üzerinde aynı 199/199 + analyzer + APK kapıları yeniden geçti. Kullanıcının `ios/` ve `assets/market/` çalışma dosyaları korunarak fast-forward merge yapıldı.
 
 ## Progression + UI Refresh
 
