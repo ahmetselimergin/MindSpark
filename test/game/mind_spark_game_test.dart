@@ -5,6 +5,7 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mind_spark/core/theme/app_theme.dart';
 import 'package:mind_spark/game/domain/grid_position.dart';
 import 'package:mind_spark/game/mind_spark_game.dart';
 import 'package:mind_spark/models/level_model.dart';
@@ -349,11 +350,9 @@ void main() {
     final bytes = await image.toByteData(format: ImageByteFormat.rawRgba);
 
     expect(bytes, isNotNull);
-    // Inside the empty centre cell, but away from its grid lines and centre dot.
-    expect(
-      _pixelAt(bytes!, image.width, 45, 45),
-      isNot(const Color(0xFFF8FAFC)),
-    );
+    // Inside empty cells, but away from grid lines, centre dots, and endpoints.
+    expect(_pixelAt(bytes!, image.width, 45, 45), AppColors.panelNavy);
+    expect(_pixelAt(bytes, image.width, 25, 45), const Color(0xFF0E1628));
   });
 
   test(
