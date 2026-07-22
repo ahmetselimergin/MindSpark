@@ -1,0 +1,10 @@
+# Copy this file to android/key.properties (gitignored) and fill in real values.
+# Generate the upload keystore with:
+#   keytool -genkey -v -keystore ~/mindspark-upload.jks \
+#     -keyalg RSA -keysize 2048 -validity 10000 -alias mindspark
+#
+# storeFile is an absolute path to the .jks file (keep it OUTSIDE the repo).
+storePassword=CHANGE_ME
+keyPassword=CHANGE_ME
+keyAlias=mindspark
+storeFile=/absolute/path/to/mindspark-upload.jks

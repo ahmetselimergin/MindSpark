@@ -44,6 +44,11 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Android release signing — keep the keystore and passwords out of git
+/android/key.properties
+*.jks
+*.keystore
+
 # Local worktrees and task orchestration artifacts
 .worktrees/
 .superpowers/

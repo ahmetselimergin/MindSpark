@@ -14,9 +14,7 @@ typedef ProgressRepositoryInitializer = Future<ProgressRepository> Function();
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // Child-directed: request age-restricted (kids-appropriate) ads. Yandex has
-  // no client COPPA flag beyond this; content rating is set in the AN panel.
-  unawaited(YandexAds.setAgeRestricted(true));
+  // 13+ general-audience app: no age restriction, so ad fill is not limited.
   unawaited(YandexAds.initialize());
   runApp(const ProgressBootstrap(initializer: initializeProgressRepository));
 }
