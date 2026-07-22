@@ -202,6 +202,20 @@ final class PlayerProgress {
     );
   }
 
+  /// Resolves legacy saves that still point at a level already completed.
+  ///
+  /// Progression is sequential, so advancing stops at the first unfinished
+  /// positive ID. No score, completion, life, star, or settings data changes.
+  PlayerProgress reconcileCurrentLevel() {
+    var currentLevel = highestUnlockedLevel;
+    while (completedLevelIds.contains(currentLevel)) {
+      currentLevel++;
+    }
+    return currentLevel == highestUnlockedLevel
+        ? this
+        : copyWith(highestUnlockedLevel: currentLevel);
+  }
+
   /// Copies the record while setting both the life count and the regen anchor —
   /// including back to `null`, which the general [copyWith] cannot express.
   PlayerProgress copyWithLives({required int lives, required DateTime? anchor}) {

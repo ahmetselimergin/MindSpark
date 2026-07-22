@@ -29,6 +29,27 @@ void main() {
       expect(repository.loadCount, 1);
     });
 
+    test('normalizes a legacy completed current level on load', () async {
+      final stored = PlayerProgress(
+        schemaVersion: 3,
+        highestUnlockedLevel: 3,
+        completedLevelIds: const {1, 2, 3},
+        totalScore: 300,
+        lives: 3,
+        soundEnabled: true,
+        vibrationEnabled: true,
+      );
+      final repository = RecordingProgressRepository(stored);
+      final container = _container(repository);
+      addTearDown(container.dispose);
+
+      final loaded = await container.read(appProgressControllerProvider.future);
+
+      expect(loaded.highestUnlockedLevel, 4);
+      expect(loaded.completedLevelIds, {1, 2, 3});
+      expect(repository.saved, isEmpty);
+    });
+
     test('saves first completion and skips an idempotent replay', () async {
       final repository = RecordingProgressRepository();
       final container = _container(repository);
@@ -65,36 +86,40 @@ void main() {
       expect(repository.saved.last, progress);
     });
 
-    test('resetProgress clears progress but keeps the sound/vibration settings',
-        () async {
-      final stored = PlayerProgress(
-        schemaVersion: 1,
-        highestUnlockedLevel: 7,
-        completedLevelIds: const {1, 2, 3, 4, 5, 6},
-        totalScore: 600,
-        lives: 2,
-        soundEnabled: false,
-        vibrationEnabled: false,
-      );
-      final repository = RecordingProgressRepository(stored);
-      final container = _container(repository);
-      addTearDown(container.dispose);
-      final controller = container.read(appProgressControllerProvider.notifier);
-      await container.read(appProgressControllerProvider.future);
+    test(
+      'resetProgress clears progress but keeps the sound/vibration settings',
+      () async {
+        final stored = PlayerProgress(
+          schemaVersion: 1,
+          highestUnlockedLevel: 7,
+          completedLevelIds: const {1, 2, 3, 4, 5, 6},
+          totalScore: 600,
+          lives: 2,
+          soundEnabled: false,
+          vibrationEnabled: false,
+        );
+        final repository = RecordingProgressRepository(stored);
+        final container = _container(repository);
+        addTearDown(container.dispose);
+        final controller = container.read(
+          appProgressControllerProvider.notifier,
+        );
+        await container.read(appProgressControllerProvider.future);
 
-      await controller.resetProgress();
+        await controller.resetProgress();
 
-      final progress = container
-          .read(appProgressControllerProvider)
-          .requireValue;
-      expect(progress.highestUnlockedLevel, 1);
-      expect(progress.completedLevelIds, isEmpty);
-      expect(progress.totalScore, 0);
-      expect(progress.lives, 3);
-      expect(progress.soundEnabled, isFalse); // preserved
-      expect(progress.vibrationEnabled, isFalse); // preserved
-      expect(repository.saved.last, progress);
-    });
+        final progress = container
+            .read(appProgressControllerProvider)
+            .requireValue;
+        expect(progress.highestUnlockedLevel, 1);
+        expect(progress.completedLevelIds, isEmpty);
+        expect(progress.totalScore, 0);
+        expect(progress.lives, 3);
+        expect(progress.soundEnabled, isFalse); // preserved
+        expect(progress.vibrationEnabled, isFalse); // preserved
+        expect(repository.saved.last, progress);
+      },
+    );
 
     test(
       'exposes save failure and retries the exact unsaved candidate',
@@ -251,7 +276,10 @@ void main() {
     });
 
     test('spendLife decrements and starts the clock from full', () async {
-      final now = DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true);
+      final now = DateTime.fromMillisecondsSinceEpoch(
+        1700000000000,
+        isUtc: true,
+      );
       final repository = RecordingProgressRepository(); // initial: 3 lives
       final container = _containerWithClock(repository, () => now);
       addTearDown(container.dispose);
@@ -269,7 +297,10 @@ void main() {
     });
 
     test('reconcileLives grants elapsed lives and persists once', () async {
-      final anchor = DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true);
+      final anchor = DateTime.fromMillisecondsSinceEpoch(
+        1700000000000,
+        isUtc: true,
+      );
       final stored = const PlayerProgress.initial().copyWithLives(
         lives: 1,
         anchor: anchor,
@@ -287,33 +318,44 @@ void main() {
           .read(appProgressControllerProvider)
           .requireValue;
       expect(progress.lives, 2);
-      expect(progress.livesRegenAnchor, anchor.add(const Duration(minutes: 10)));
+      expect(
+        progress.livesRegenAnchor,
+        anchor.add(const Duration(minutes: 10)),
+      );
       expect(repository.saved, hasLength(1));
     });
 
-    test('reconcileLives is a no-op within the same window (no write)', () async {
-      final anchor = DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true);
-      final stored = const PlayerProgress.initial().copyWithLives(
-        lives: 2,
-        anchor: anchor,
-      );
-      final repository = RecordingProgressRepository(stored);
-      final container = _containerWithClock(
-        repository,
-        () => anchor.add(const Duration(minutes: 3)),
-      );
-      addTearDown(container.dispose);
-      final controller = container.read(appProgressControllerProvider.notifier);
-      await container.read(appProgressControllerProvider.future);
+    test(
+      'reconcileLives is a no-op within the same window (no write)',
+      () async {
+        final anchor = DateTime.fromMillisecondsSinceEpoch(
+          1700000000000,
+          isUtc: true,
+        );
+        final stored = const PlayerProgress.initial().copyWithLives(
+          lives: 2,
+          anchor: anchor,
+        );
+        final repository = RecordingProgressRepository(stored);
+        final container = _containerWithClock(
+          repository,
+          () => anchor.add(const Duration(minutes: 3)),
+        );
+        addTearDown(container.dispose);
+        final controller = container.read(
+          appProgressControllerProvider.notifier,
+        );
+        await container.read(appProgressControllerProvider.future);
 
-      await controller.reconcileLives();
+        await controller.reconcileLives();
 
-      expect(repository.saved, isEmpty);
-      expect(
-        container.read(appProgressControllerProvider).requireValue.lives,
-        2,
-      );
-    });
+        expect(repository.saved, isEmpty);
+        expect(
+          container.read(appProgressControllerProvider).requireValue.lives,
+          2,
+        );
+      },
+    );
   });
 }
 

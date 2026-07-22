@@ -70,7 +70,13 @@ void main() {
       expect(progress.saved.single.completedLevelIds, {1});
       expect(find.bySemanticsLabel('Next level'), findsOneWidget);
 
-      tester.widget<ImageButton>(find.byWidgetPredicate((w) => w is ImageButton && w.semanticLabel == 'Next level')).onPressed!();
+      tester
+          .widget<ImageButton>(
+            find.byWidgetPredicate(
+              (w) => w is ImageButton && w.semanticLabel == 'Next level',
+            ),
+          )
+          .onPressed!();
       await _pumpRoute(tester);
 
       expect(find.text('Level 2'), findsOneWidget);
@@ -83,7 +89,7 @@ void main() {
     final progress = _RecordingProgressRepository(
       PlayerProgress(
         schemaVersion: 1,
-        highestUnlockedLevel: 1,
+        highestUnlockedLevel: 2,
         completedLevelIds: {1},
         totalScore: 100,
         lives: 3,
@@ -95,7 +101,7 @@ void main() {
       _testApp(harness: harness, progressRepository: progress),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.bySemanticsLabel('Play'));
+    await tester.tap(find.bySemanticsLabel('Replay level 1'));
     await _pumpRoute(tester);
 
     harness.completeLatest();
@@ -230,41 +236,40 @@ void main() {
     expect(progress.attempts, hasLength(1));
   });
 
-  testWidgets(
-    'result screen always offers NEXT LEVEL plus a HOME shortcut',
-    (tester) async {
-      final harness = _GameHarness();
-      final progress = _RecordingProgressRepository(
-        PlayerProgress(
-          schemaVersion: 1,
-          highestUnlockedLevel: 5,
-          completedLevelIds: {1},
-          totalScore: 100,
-          lives: 3,
-          soundEnabled: true,
-          vibrationEnabled: true,
-        ),
-      );
-      await tester.pumpWidget(
-        _testApp(harness: harness, progressRepository: progress),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.bySemanticsLabel('Play'));
-      await _pumpRoute(tester);
+  testWidgets('result screen always offers NEXT LEVEL plus a HOME shortcut', (
+    tester,
+  ) async {
+    final harness = _GameHarness();
+    final progress = _RecordingProgressRepository(
+      PlayerProgress(
+        schemaVersion: 1,
+        highestUnlockedLevel: 5,
+        completedLevelIds: {1},
+        totalScore: 100,
+        lives: 3,
+        soundEnabled: true,
+        vibrationEnabled: true,
+      ),
+    );
+    await tester.pumpWidget(
+      _testApp(harness: harness, progressRepository: progress),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.bySemanticsLabel('Play'));
+    await _pumpRoute(tester);
 
-      harness.completeLatest();
-      await _pumpRoute(tester);
+    harness.completeLatest();
+    await _pumpRoute(tester);
 
-      // Endless progression: completing a level always offers NEXT LEVEL,
-      // plus a secondary HOME shortcut back to the hub.
-      expect(find.bySemanticsLabel('Next level'), findsOneWidget);
-      expect(find.byTooltip('Main menu'), findsOneWidget);
+    // Endless progression: completing a level always offers NEXT LEVEL,
+    // plus a secondary HOME shortcut back to the hub.
+    expect(find.bySemanticsLabel('Next level'), findsOneWidget);
+    expect(find.byTooltip('Main menu'), findsOneWidget);
 
-      await tester.tap(find.byTooltip('Main menu'));
-      await tester.pumpAndSettle();
-      expect(find.bySemanticsLabel('Play'), findsOneWidget);
-    },
-  );
+    await tester.tap(find.byTooltip('Main menu'));
+    await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel('Play'), findsOneWidget);
+  });
 
   testWidgets('invalid gameplay arguments show a safe error page', (
     tester,
@@ -300,6 +305,52 @@ void main() {
 
     expect(find.text('This level could not be opened.'), findsOneWidget);
     expect(harness.games, isEmpty);
+  });
+
+  testWidgets('legacy completed current level authorizes level 4 only', (
+    tester,
+  ) async {
+    final harness = _GameHarness();
+    final navigatorKey = GlobalKey<NavigatorState>();
+    final legacy = _RecordingProgressRepository(
+      PlayerProgress(
+        schemaVersion: 3,
+        highestUnlockedLevel: 3,
+        completedLevelIds: const {1, 2, 3},
+        totalScore: 300,
+        lives: 3,
+        soundEnabled: true,
+        vibrationEnabled: true,
+      ),
+    );
+    await tester.pumpWidget(
+      _testApp(
+        harness: harness,
+        progressRepository: legacy,
+        navigatorKey: navigatorKey,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    navigatorKey.currentState!.pushNamed(
+      AppRoutes.gameplay,
+      arguments: const GameplayRouteArgs(4),
+    );
+    await _pumpRoute(tester);
+
+    expect(find.text('Level 4'), findsWidgets);
+    expect(harness.games, hasLength(1));
+
+    navigatorKey.currentState!.pop();
+    await _pumpRoute(tester);
+    navigatorKey.currentState!.pushNamed(
+      AppRoutes.gameplay,
+      arguments: const GameplayRouteArgs(5),
+    );
+    await _pumpRoute(tester);
+
+    expect(find.text('This level could not be opened.'), findsOneWidget);
+    expect(harness.games, hasLength(1));
   });
 
   testWidgets('missing gameplay level is rejected', (tester) async {
@@ -453,7 +504,11 @@ void main() {
     harness.completeLatest();
     await _pumpRoute(tester);
 
-    final next = tester.widget<ImageButton>(find.byWidgetPredicate((w) => w is ImageButton && w.semanticLabel == 'Next level'));
+    final next = tester.widget<ImageButton>(
+      find.byWidgetPredicate(
+        (w) => w is ImageButton && w.semanticLabel == 'Next level',
+      ),
+    );
     next.onPressed!();
     next.onPressed!();
     await _pumpRoute(tester);
@@ -535,6 +590,14 @@ final class _TestLevelRepository implements LevelRepository {
       points: [
         GridPoint(x: 0, y: 1, color: 'yellow'),
         GridPoint(x: 1, y: 0, color: 'yellow'),
+      ],
+    ),
+    const LevelModel(
+      id: 4,
+      size: 2,
+      points: [
+        GridPoint(x: 0, y: 0, color: 'red'),
+        GridPoint(x: 1, y: 1, color: 'red'),
       ],
     ),
     const LevelModel(

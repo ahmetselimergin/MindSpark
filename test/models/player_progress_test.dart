@@ -182,30 +182,36 @@ void main() {
       );
     });
 
-    test('stamps the current schema version (3) on every constructed record', () {
-      for (final raw in <Object?>[99, 0, -1, true, false, 1.0, '1', 1]) {
+    test(
+      'stamps the current schema version (3) on every constructed record',
+      () {
+        for (final raw in <Object?>[99, 0, -1, true, false, 1.0, '1', 1]) {
+          expect(
+            PlayerProgress.fromMap({'schemaVersion': raw}).schemaVersion,
+            3,
+            reason: 'schemaVersion: $raw',
+          );
+        }
         expect(
-          PlayerProgress.fromMap({'schemaVersion': raw}).schemaVersion,
+          PlayerProgress(
+            schemaVersion: 2,
+            highestUnlockedLevel: 1,
+            completedLevelIds: const {},
+            totalScore: 0,
+            lives: 3,
+            soundEnabled: true,
+            vibrationEnabled: true,
+          ).schemaVersion,
           3,
-          reason: 'schemaVersion: $raw',
         );
-      }
-      expect(
-        PlayerProgress(
-          schemaVersion: 2,
-          highestUnlockedLevel: 1,
-          completedLevelIds: const {},
-          totalScore: 0,
-          lives: 3,
-          soundEnabled: true,
-          vibrationEnabled: true,
-        ).schemaVersion,
-        3,
-      );
-    });
+      },
+    );
 
     test('round-trips a v2 record carrying a regen anchor', () {
-      final anchor = DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true);
+      final anchor = DateTime.fromMillisecondsSinceEpoch(
+        1700000000000,
+        isUtc: true,
+      );
       final record = <Object?, Object?>{
         'schemaVersion': 2,
         'highestUnlockedLevel': 4,
@@ -224,26 +230,29 @@ void main() {
       expect(PlayerProgress.fromPersistedMap(progress.toMap()), progress);
     });
 
-    test('migrates a persisted v1 record: keeps progress, refills lives to 3', () {
-      final progress = PlayerProgress.fromPersistedMap(<Object?, Object?>{
-        'schemaVersion': 1,
-        'highestUnlockedLevel': 6,
-        'completedLevelIds': <int>[1, 2, 3, 4, 5],
-        'totalScore': 500,
-        'lives': 2,
-        'soundEnabled': false,
-        'vibrationEnabled': true,
-      });
+    test(
+      'migrates a persisted v1 record: keeps progress, refills lives to 3',
+      () {
+        final progress = PlayerProgress.fromPersistedMap(<Object?, Object?>{
+          'schemaVersion': 1,
+          'highestUnlockedLevel': 6,
+          'completedLevelIds': <int>[1, 2, 3, 4, 5],
+          'totalScore': 500,
+          'lives': 2,
+          'soundEnabled': false,
+          'vibrationEnabled': true,
+        });
 
-      expect(progress.schemaVersion, 3);
-      expect(progress.highestUnlockedLevel, 6);
-      expect(progress.completedLevelIds, {1, 2, 3, 4, 5});
-      expect(progress.totalScore, 500);
-      expect(progress.lives, 3); // refilled
-      expect(progress.livesRegenAnchor, isNull);
-      expect(progress.levelStars, isEmpty);
-      expect(progress.soundEnabled, isFalse);
-    });
+        expect(progress.schemaVersion, 3);
+        expect(progress.highestUnlockedLevel, 6);
+        expect(progress.completedLevelIds, {1, 2, 3, 4, 5});
+        expect(progress.totalScore, 500);
+        expect(progress.lives, 3); // refilled
+        expect(progress.livesRegenAnchor, isNull);
+        expect(progress.levelStars, isEmpty);
+        expect(progress.soundEnabled, isFalse);
+      },
+    );
 
     test('completeLevel records and keeps the best stars', () {
       final a = const PlayerProgress.initial().completeLevel(
@@ -313,7 +322,10 @@ void main() {
     });
 
     test('spendLife from full starts the regen clock', () {
-      final now = DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true);
+      final now = DateTime.fromMillisecondsSinceEpoch(
+        1700000000000,
+        isUtc: true,
+      );
       const full = PlayerProgress.initial(); // 3 lives, no anchor
 
       final after = full.spendLife(now: now);
@@ -323,7 +335,10 @@ void main() {
     });
 
     test('spendLife below full keeps the running anchor', () {
-      final anchor = DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true);
+      final anchor = DateTime.fromMillisecondsSinceEpoch(
+        1700000000000,
+        isUtc: true,
+      );
       final later = anchor.add(const Duration(minutes: 3));
       final partial = const PlayerProgress.initial().copyWithLives(
         lives: 2,
@@ -337,7 +352,10 @@ void main() {
     });
 
     test('spendLife at zero lives is a no-op', () {
-      final now = DateTime.fromMillisecondsSinceEpoch(1700000000000, isUtc: true);
+      final now = DateTime.fromMillisecondsSinceEpoch(
+        1700000000000,
+        isUtc: true,
+      );
       final empty = const PlayerProgress.initial().copyWithLives(
         lives: 0,
         anchor: now,
@@ -438,6 +456,43 @@ void main() {
 
       expect(progress.completeLevel(levelId: 0, nextLevelId: 10), progress);
       expect(progress.completeLevel(levelId: -1, nextLevelId: 10), progress);
+    });
+
+    test('reconciles a completed current level to the first unfinished id', () {
+      final legacy = PlayerProgress(
+        schemaVersion: 3,
+        highestUnlockedLevel: 3,
+        completedLevelIds: const {1, 2, 3},
+        totalScore: 300,
+        lives: 2,
+        levelStars: const {1: 3, 2: 2, 3: 1},
+        soundEnabled: false,
+        vibrationEnabled: true,
+      );
+
+      final reconciled = legacy.reconcileCurrentLevel();
+
+      expect(reconciled.highestUnlockedLevel, 4);
+      expect(reconciled.completedLevelIds, legacy.completedLevelIds);
+      expect(reconciled.totalScore, legacy.totalScore);
+      expect(reconciled.lives, legacy.lives);
+      expect(reconciled.levelStars, legacy.levelStars);
+      expect(reconciled.soundEnabled, legacy.soundEnabled);
+      expect(reconciled.vibrationEnabled, legacy.vibrationEnabled);
+    });
+
+    test('reconciliation stops at a completion gap', () {
+      final progress = PlayerProgress(
+        schemaVersion: 3,
+        highestUnlockedLevel: 1,
+        completedLevelIds: const {1, 2, 4},
+        totalScore: 300,
+        lives: 3,
+        soundEnabled: true,
+        vibrationEnabled: true,
+      );
+
+      expect(progress.reconcileCurrentLevel().highestUnlockedLevel, 3);
     });
   });
 }

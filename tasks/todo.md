@@ -2,11 +2,17 @@
 
 ## Güncel Main — Legacy Progress + Gameplay UI
 
-- [ ] Eski tamamlanmış current-level kaydını sonsuz sıradaki sonraki level'a uzlaştır
-- [ ] Home ve Gameplay'in aynı normalize edilmiş progress durumunu kullandığını test et
+- [x] Eski tamamlanmış current-level kaydını sonsuz sıradaki sonraki level'a uzlaştır
+- [x] Home ve Gameplay'in aynı normalize edilmiş progress durumunu kullandığını test et
 - [ ] Beyaz Flame board'u koyu blueprint renderer'a geçir
 - [ ] Timer, can, image kontrolleri, stuck feedback ve Yandex banner'ı koruyarak Gameplay yerleşimini iyileştir
 - [ ] Küçük ekran, tam test, analyzer, Android APK ve Pixel 10 Pro görsel kapılarını çalıştır
+
+### Legacy progress review
+
+- Eski `{1,2,3} / current=3` kaydı state sınırında Level 4'e uzlaştırılıyor; kalıcı veri şeması ve diğer oyuncu alanları değişmiyor.
+- Home Level 3'ü replay, Level 4'ü Play gösteriyor; Gameplay Level 4'ü kabul edip Level 5'i kilitli tutuyor.
+- 65 odaklı ve 198 tam test geçti; `flutter analyze` ve `git diff --check` temiz tamamlandı.
 
 ## Progression + UI Refresh
 

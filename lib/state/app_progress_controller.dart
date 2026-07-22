@@ -43,7 +43,8 @@ final class AppProgressController extends AsyncNotifier<PlayerProgress> {
   @override
   Future<PlayerProgress> build() async {
     _lastUnsavedProgress = null;
-    return _repository.load();
+    final stored = await _repository.load();
+    return stored.reconcileCurrentLevel();
   }
 
   Future<void> completeLevel({

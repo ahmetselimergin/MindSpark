@@ -51,8 +51,9 @@ Widget _harness(
 }) {
   return ProviderScope(
     overrides: [
-      progressRepositoryProvider
-          .overrideWithValue(InMemoryProgressRepository(stored)),
+      progressRepositoryProvider.overrideWithValue(
+        InMemoryProgressRepository(stored),
+      ),
       clockProvider.overrideWithValue(() => now),
     ],
     child: MaterialApp(
@@ -61,21 +62,25 @@ Widget _harness(
         settings: settings,
         builder: (_) => switch (settings.name) {
           AppRoutes.gameplay => Scaffold(
-              body: Text('GAMEPLAY ${(settings.arguments as GameplayRouteArgs).levelId}'),
+            body: Text(
+              'GAMEPLAY ${(settings.arguments as GameplayRouteArgs).levelId}',
             ),
+          ),
           AppRoutes.outOfLives => Scaffold(
-              body: Text('OUT OF LIVES ${(settings.arguments as OutOfLivesRouteArgs).levelId}'),
+            body: Text(
+              'OUT OF LIVES ${(settings.arguments as OutOfLivesRouteArgs).levelId}',
             ),
+          ),
           _ => Consumer(
-              builder: (context, ref, _) {
-                final ready = ref.watch(appProgressControllerProvider).hasValue;
-                return Scaffold(
-                  body: ready
-                      ? const SizedBox(height: 240, child: LevelMapView())
-                      : const SizedBox.shrink(),
-                );
-              },
-            ),
+            builder: (context, ref, _) {
+              final ready = ref.watch(appProgressControllerProvider).hasValue;
+              return Scaffold(
+                body: ready
+                    ? const SizedBox(height: 240, child: LevelMapView())
+                    : const SizedBox.shrink(),
+              );
+            },
+          ),
         },
       ),
     ),
@@ -88,20 +93,39 @@ void main() {
   testWidgets('renders completed, current and locked cards from progress', (
     tester,
   ) async {
-    await tester.pumpWidget(_harness(
-      _progress(
-        highest: 10,
-        completed: {for (var i = 1; i <= 9; i++) i},
-        stars: {for (var i = 1; i <= 9; i++) i: 3},
+    await tester.pumpWidget(
+      _harness(
+        _progress(
+          highest: 10,
+          completed: {for (var i = 1; i <= 9; i++) i},
+          stars: {for (var i = 1; i <= 9; i++) i: 3},
+        ),
+        t0,
       ),
-      t0,
-    ));
+    );
     await tester.pumpAndSettle();
 
     expect(find.bySemanticsLabel('Play'), findsOneWidget); // level 10
     expect(find.bySemanticsLabel('Replay level 9'), findsOneWidget);
     expect(find.bySemanticsLabel('Level 11 locked'), findsOneWidget);
     expect(find.bySemanticsLabel('Level 15 locked'), findsOneWidget);
+  });
+
+  testWidgets('legacy completion marks level 3 replay and level 4 current', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _harness(_progress(highest: 3, completed: {1, 2, 3}), t0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.bySemanticsLabel('Replay level 3'), findsOneWidget);
+    expect(find.bySemanticsLabel('Play'), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Play'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('GAMEPLAY 4'), findsOneWidget);
   });
 
   testWidgets('tapping the current card opens gameplay for that level', (
@@ -117,10 +141,12 @@ void main() {
   });
 
   testWidgets('tapping a completed card replays it', (tester) async {
-    await tester.pumpWidget(_harness(
-      _progress(highest: 3, completed: {1, 2}, stars: {1: 3, 2: 2}),
-      t0,
-    ));
+    await tester.pumpWidget(
+      _harness(
+        _progress(highest: 3, completed: {1, 2}, stars: {1: 3, 2: 2}),
+        t0,
+      ),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.bySemanticsLabel('Replay level 2'));
@@ -130,7 +156,9 @@ void main() {
   });
 
   testWidgets('locked cards are not tappable', (tester) async {
-    await tester.pumpWidget(_harness(_progress(highest: 2, completed: {1}), t0));
+    await tester.pumpWidget(
+      _harness(_progress(highest: 2, completed: {1}), t0),
+    );
     await tester.pumpAndSettle();
 
     final locked = tester
@@ -143,10 +171,12 @@ void main() {
   testWidgets('current tap with zero lives routes to out-of-lives', (
     tester,
   ) async {
-    await tester.pumpWidget(_harness(
-      _progress(highest: 1, lives: 0, anchor: t0),
-      t0.add(const Duration(minutes: 1)),
-    ));
+    await tester.pumpWidget(
+      _harness(
+        _progress(highest: 1, lives: 0, anchor: t0),
+        t0.add(const Duration(minutes: 1)),
+      ),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.bySemanticsLabel('Play'));
@@ -158,10 +188,12 @@ void main() {
   testWidgets('celebration badge plays for the flagged level then clears', (
     tester,
   ) async {
-    await tester.pumpWidget(_harness(
-      _progress(highest: 4, completed: {1, 2, 3}, stars: {1: 3, 2: 3, 3: 3}),
-      t0,
-    ));
+    await tester.pumpWidget(
+      _harness(
+        _progress(highest: 4, completed: {1, 2, 3}, stars: {1: 3, 2: 3, 3: 3}),
+        t0,
+      ),
+    );
     await tester.pumpAndSettle();
 
     final container = ProviderScope.containerOf(

@@ -9,3 +9,4 @@
 - Retry callbacks need a synchronous in-flight latch before the initializer is invoked or the UI rebuilds; pair it with attempt identity so stale async completions cannot win state ownership.
 - End-of-content is a distinct product state: `highestUnlockedLevel` cannot double as “next playable” after the final level is completed. Acceptance tests must return Home after final completion and assert that the last level is not silently reopened.
 - Passing widget tests is not evidence of visual quality. Before calling a UI complete, inspect a rendered phone-sized frame for hierarchy, board contrast, control affordance, and unstructured empty space.
+- Save-format upgrades must reconcile legacy semantic invariants at one shared state boundary before any screen authorizes or labels content. Keep harmless derived repairs non-persistent when repeating them is idempotent, and stop sequential advancement at the first completion gap.
