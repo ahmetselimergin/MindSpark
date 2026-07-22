@@ -4,15 +4,23 @@
 
 - [x] Eski tamamlanmış current-level kaydını sonsuz sıradaki sonraki level'a uzlaştır
 - [x] Home ve Gameplay'in aynı normalize edilmiş progress durumunu kullandığını test et
-- [ ] Beyaz Flame board'u koyu blueprint renderer'a geçir
-- [ ] Timer, can, image kontrolleri, stuck feedback ve Yandex banner'ı koruyarak Gameplay yerleşimini iyileştir
-- [ ] Küçük ekran, tam test, analyzer, Android APK ve Pixel 10 Pro görsel kapılarını çalıştır
+- [x] Beyaz Flame board'u koyu blueprint renderer'a geçir
+- [x] Timer, can, image kontrolleri, stuck feedback ve Yandex banner'ı koruyarak Gameplay yerleşimini iyileştir
+- [x] Küçük ekran, tam test, analyzer, Android APK ve Pixel 10 Pro görsel kapılarını çalıştır
 
 ### Legacy progress review
 
 - Eski `{1,2,3} / current=3` kaydı state sınırında Level 4'e uzlaştırılıyor; kalıcı veri şeması ve diğer oyuncu alanları değişmiyor.
 - Home Level 3'ü replay, Level 4'ü Play gösteriyor; Gameplay Level 4'ü kabul edip Level 5'i kilitli tutuyor.
 - 65 odaklı ve 198 tam test geçti; `flutter analyze` ve `git diff --check` temiz tamamlandı.
+
+### Current gameplay UI review
+
+- Koyu alternating-cell board, grid/dot katmanı, glow yollar ve halka endpoint'ler mevcut Flame input/completion API'si korunarak uygulandı.
+- Gameplay; timer, canlar, restart/home image kontrolleri, stuck feedback, Yandex banner ve save-error dallarını koruyor. Talimat board'a bitişik, uzun ekranda ikincil hedef şeridi kalan alanı dengeliyor.
+- Renderer inceleme düzeltmesi iki güvenli boş hücrede exact panel/alternate renklerini doğruluyor.
+- 320×568 + 2× metin ve 412×915 board-talimat yakınlığı testleri geçti; Pixel 10 Pro üzerinde bağlı yol render'ı görsel olarak incelendi.
+- Son taze kapılar: `flutter analyze` temiz, `flutter test` 199/199, `flutter build apk --debug` başarılı ve `git diff --check` temiz. Build yalnız mevcut Yandex KGP gelecek-uyumluluk uyarısını üretiyor.
 
 ## Progression + UI Refresh
 
