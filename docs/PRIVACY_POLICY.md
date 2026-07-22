@@ -55,4 +55,4 @@ We may update this policy; the effective date above reflects the latest version.
 
 ## Contact
 
-Questions: <CONTACT_EMAIL>
+Questions: asease42@gmail.com
