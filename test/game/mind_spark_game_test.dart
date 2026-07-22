@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'dart:typed_data';
 
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
@@ -339,6 +340,22 @@ void main() {
     recorder.endRecording();
   });
 
+  test('renders a dark blueprint board', () async {
+    final game = _game()..onGameResize(Vector2.all(100));
+    final recorder = PictureRecorder();
+
+    game.render(Canvas(recorder));
+    final image = await recorder.endRecording().toImage(100, 100);
+    final bytes = await image.toByteData(format: ImageByteFormat.rawRgba);
+
+    expect(bytes, isNotNull);
+    // Inside the empty centre cell, but away from its grid lines and centre dot.
+    expect(
+      _pixelAt(bytes!, image.width, 45, 45),
+      isNot(const Color(0xFFF8FAFC)),
+    );
+  });
+
   test(
     'forwards onAllPairsConnected when pairs connect but the board is unfilled',
     () {
@@ -378,16 +395,25 @@ void main() {
   });
 }
 
+Color _pixelAt(ByteData bytes, int width, int x, int y) {
+  final offset = (y * width + x) * 4;
+  return Color.fromARGB(
+    bytes.getUint8(offset + 3),
+    bytes.getUint8(offset),
+    bytes.getUint8(offset + 1),
+    bytes.getUint8(offset + 2),
+  );
+}
+
 MindSparkGame _game({
   LevelModel? level,
   void Function()? onCompleted,
   void Function()? onAllPairsConnected,
-}) =>
-    MindSparkGame(
-      level: level ?? _level(),
-      onCompleted: onCompleted ?? () {},
-      onAllPairsConnected: onAllPairsConnected,
-    );
+}) => MindSparkGame(
+  level: level ?? _level(),
+  onCompleted: onCompleted ?? () {},
+  onAllPairsConnected: onAllPairsConnected,
+);
 
 LevelModel _level() => const LevelModel(
   id: 1,

@@ -1,39 +1,49 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppColors {
-  static const midnightInk = Color(0xFF10152B);
-  static const deepCircuit = Color(0xFF1B2340);
-  static const sparkYellow = Color(0xFFFFD166);
-  static const electricCyan = Color(0xFF4CC9F0);
-  static const coralPulse = Color(0xFFFF6B6B);
-  static const frost = Color(0xFFF7F8FF);
+  static const voidNavy = Color(0xFF080D1C);
+  static const panelNavy = Color(0xFF111A2E);
+  static const gridBlue = Color(0xFF263653);
+  static const sparkCyan = Color(0xFF62E6FF);
+  static const pulseYellow = Color(0xFFFFD76A);
+  static const signalCoral = Color(0xFFFF6B81);
+  static const mint = Color(0xFF6EE7A8);
+  static const cloud = Color(0xFFF4F7FF);
+
+  // Compatibility names retained for the existing Home and Result artwork.
+  static const midnightInk = voidNavy;
+  static const deepCircuit = panelNavy;
+  static const sparkYellow = pulseYellow;
+  static const electricCyan = sparkCyan;
+  static const coralPulse = signalCoral;
+  static const frost = cloud;
 }
 
 abstract final class AppTheme {
   static ThemeData get dark {
     const display = TextStyle(
-      fontFamily: 'sans-serif-condensed',
+      fontFamily: 'sans-serif',
       fontWeight: FontWeight.w800,
-      color: AppColors.frost,
+      color: AppColors.cloud,
     );
     const body = TextStyle(
       fontFamily: 'sans-serif',
       fontWeight: FontWeight.w500,
-      color: AppColors.frost,
+      color: AppColors.cloud,
     );
 
     return ThemeData(
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: AppColors.midnightInk,
+      scaffoldBackgroundColor: AppColors.voidNavy,
       colorScheme: const ColorScheme.dark(
-        primary: AppColors.sparkYellow,
-        secondary: AppColors.electricCyan,
-        surface: AppColors.deepCircuit,
-        error: AppColors.coralPulse,
-        onPrimary: AppColors.midnightInk,
-        onSecondary: AppColors.midnightInk,
-        onSurface: AppColors.frost,
-        onError: AppColors.midnightInk,
+        primary: AppColors.pulseYellow,
+        secondary: AppColors.sparkCyan,
+        surface: AppColors.panelNavy,
+        error: AppColors.signalCoral,
+        onPrimary: AppColors.voidNavy,
+        onSecondary: AppColors.voidNavy,
+        onSurface: AppColors.cloud,
+        onError: AppColors.voidNavy,
       ),
       textTheme: const TextTheme(
         displayLarge: display,
@@ -59,8 +69,9 @@ abstract final class AppTheme {
         ),
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.electricCyan,
+        color: AppColors.sparkCyan,
       ),
+      iconTheme: const IconThemeData(color: AppColors.cloud),
     );
   }
 }

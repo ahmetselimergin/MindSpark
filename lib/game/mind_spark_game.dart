@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 
+import '../core/theme/app_theme.dart';
 import '../models/level_model.dart';
 import 'domain/grid_position.dart';
 import 'domain/puzzle_session.dart';
@@ -200,10 +201,39 @@ final class MindSparkGame extends FlameGame with DragCallbacks {
       return;
     }
 
-    canvas.drawRect(board, Paint()..color = const Color(0xFFF8FAFC));
+    _drawBoard(canvas, board);
     _drawGrid(canvas, board);
     _drawPaths(canvas, board);
     _drawEndpoints(canvas, board);
+  }
+
+  void _drawBoard(Canvas canvas, Rect board) {
+    final cellSize = board.width / _level.size;
+    final alternatePaint = Paint()..color = const Color(0xFF0E1628);
+    final panelPaint = Paint()..color = AppColors.panelNavy;
+    final dotPaint = Paint()..color = AppColors.gridBlue.withAlpha(110);
+
+    for (var y = 0; y < _level.size; y++) {
+      for (var x = 0; x < _level.size; x++) {
+        canvas.drawRect(
+          Rect.fromLTWH(
+            board.left + x * cellSize,
+            board.top + y * cellSize,
+            cellSize,
+            cellSize,
+          ),
+          (x + y).isEven ? panelPaint : alternatePaint,
+        );
+        canvas.drawCircle(
+          Offset(
+            board.left + (x + 0.5) * cellSize,
+            board.top + (y + 0.5) * cellSize,
+          ),
+          math.max(1.1, cellSize * 0.025),
+          dotPaint,
+        );
+      }
+    }
   }
 
   Iterable<GridPosition> _orthogonalTraversal(
@@ -250,7 +280,7 @@ final class MindSparkGame extends FlameGame with DragCallbacks {
   void _drawGrid(Canvas canvas, Rect board) {
     final cellSize = board.width / _level.size;
     final paint = Paint()
-      ..color = const Color(0xFFD8DEE9)
+      ..color = AppColors.gridBlue
       ..strokeWidth = math.max(1, cellSize * 0.018);
     for (var index = 0; index <= _level.size; index++) {
       final offset = index * cellSize;
@@ -265,6 +295,13 @@ final class MindSparkGame extends FlameGame with DragCallbacks {
         paint,
       );
     }
+    canvas.drawRect(
+      board.deflate(math.max(0.5, paint.strokeWidth / 2)),
+      Paint()
+        ..color = AppColors.sparkCyan.withAlpha(110)
+        ..strokeWidth = math.max(1.5, cellSize * 0.025)
+        ..style = PaintingStyle.stroke,
+    );
   }
 
   void _drawPaths(Canvas canvas, Rect board) {
@@ -273,12 +310,7 @@ final class MindSparkGame extends FlameGame with DragCallbacks {
       if (path.cells.length < 2) {
         continue;
       }
-      final paint = Paint()
-        ..color = _colorFor(path.color)
-        ..strokeWidth = cellSize * 0.32
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round
-        ..style = PaintingStyle.stroke;
+      final color = _colorFor(path.color);
       final renderedPath = Path();
       final first = _cellCenterOffset(path.cells.first, board, cellSize);
       renderedPath.moveTo(first.dx, first.dy);
@@ -286,7 +318,21 @@ final class MindSparkGame extends FlameGame with DragCallbacks {
         final center = _cellCenterOffset(cell, board, cellSize);
         renderedPath.lineTo(center.dx, center.dy);
       }
-      canvas.drawPath(renderedPath, paint);
+      final glow = Paint()
+        ..color = color.withAlpha(72)
+        ..strokeWidth = cellSize * 0.48
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..style = PaintingStyle.stroke;
+      final core = Paint()
+        ..color = color
+        ..strokeWidth = cellSize * 0.27
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..style = PaintingStyle.stroke;
+      canvas
+        ..drawPath(renderedPath, glow)
+        ..drawPath(renderedPath, core);
     }
   }
 
@@ -298,11 +344,26 @@ final class MindSparkGame extends FlameGame with DragCallbacks {
         board,
         cellSize,
       );
-      canvas.drawCircle(
-        center,
-        cellSize * 0.31,
-        Paint()..color = _colorFor(point.color),
-      );
+      final color = _colorFor(point.color);
+      canvas
+        ..drawCircle(
+          center,
+          cellSize * 0.38,
+          Paint()..color = color.withAlpha(54),
+        )
+        ..drawCircle(
+          center,
+          cellSize * 0.29,
+          Paint()..color = AppColors.panelNavy,
+        )
+        ..drawCircle(
+          center,
+          cellSize * 0.27,
+          Paint()
+            ..color = color
+            ..strokeWidth = math.max(2, cellSize * 0.065)
+            ..style = PaintingStyle.stroke,
+        );
       _drawEndpointSymbol(canvas, center, cellSize * 0.13, point.color);
     }
   }
