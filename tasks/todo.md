@@ -1,5 +1,13 @@
 # MindSpark MVP Çalışma Planı
 
+## Güncel Main — Legacy Progress + Gameplay UI
+
+- [ ] Eski tamamlanmış current-level kaydını sonsuz sıradaki sonraki level'a uzlaştır
+- [ ] Home ve Gameplay'in aynı normalize edilmiş progress durumunu kullandığını test et
+- [ ] Beyaz Flame board'u koyu blueprint renderer'a geçir
+- [ ] Timer, can, image kontrolleri, stuck feedback ve Yandex banner'ı koruyarak Gameplay yerleşimini iyileştir
+- [ ] Küçük ekran, tam test, analyzer, Android APK ve Pixel 10 Pro görsel kapılarını çalıştır
+
 ## Progression + UI Refresh
 
 - [ ] Son level tekrarını RED regresyon testiyle yeniden üret
