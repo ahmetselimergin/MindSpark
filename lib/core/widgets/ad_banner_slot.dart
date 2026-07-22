@@ -43,7 +43,10 @@ final class _AdBannerSlotState extends State<AdBannerSlot> {
 
   @override
   void dispose() {
-    _banner?.destroy();
+    // Best-effort native teardown: destroy() can race the platform-view
+    // channel teardown and throw MissingPluginException once the native side
+    // is already gone. That error is non-actionable during disposal.
+    _banner?.destroy().catchError((Object _) {});
     super.dispose();
   }
 
