@@ -1,6 +1,6 @@
 # Privacy Policy — Mind Spark
 
-_Effective date: 22 July 2026_
+_Effective date: 23 July 2026_
 
 Mind Spark ("the app", "we") is a mobile puzzle game. This policy explains what
 data the app collects and how it is used. Play does not require an account.
@@ -19,12 +19,12 @@ collect:
 
 ## Third‑party services
 
-- **Yandex Mobile Ads (Yandex Advertising Network)** — serves banner ads.
-  Privacy policy: https://yandex.com/legal/confidential/
-- **AppMetrica** (bundled with Yandex Mobile Ads) — attribution and analytics.
-  Privacy policy: https://appmetrica.yandex.com/about/privacy-policy
+- **Google AdMob (Google Mobile Ads SDK)** — serves banner and interstitial
+  ads. Privacy policy: https://policies.google.com/privacy — how Google uses
+  data from apps that use its services:
+  https://policies.google.com/technologies/partner-sites
 
-These providers process data under their own policies.
+Google processes data as described in its own policies.
 
 ## How we use data
 
