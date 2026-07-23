@@ -28,8 +28,8 @@ android {
         applicationId = "com.mindspark.mind_spark"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        // yandex_mobileads 8.2.0 requires a minimum Android minSdk of 23.
-        minSdk = flutter.minSdkVersion
+        // google_mobile_ads requires a minimum Android minSdk of 24.
+        minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

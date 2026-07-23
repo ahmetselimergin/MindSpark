@@ -1,13 +1,13 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
-import 'package:yandex_mobileads/mobile_ads.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 /// Fixed slot height so the gameplay layout never shifts as the ad loads.
 const double _kBannerSlotHeight = 60;
 
-/// Yandex Advertising Network banner block id for Mind Spark (Android).
-const String _kBannerBlockId = 'R-M-19628695-1';
+/// AdMob banner ad unit id for Mind Spark (Android).
+const String _kBannerAdUnitId = 'ca-app-pub-7351480239032506/3880507007';
 
 /// Bottom-of-screen banner slot shown during gameplay. Renders an empty
 /// reserved box under `flutter test` and never touches the ads plugin there.
@@ -20,6 +20,7 @@ final class AdBannerSlot extends StatefulWidget {
 
 final class _AdBannerSlotState extends State<AdBannerSlot> {
   BannerAd? _banner;
+  bool _loaded = false;
   bool _requested = false;
 
   bool get _adsDisabled => Platform.environment.containsKey('FLUTTER_TEST');
@@ -31,22 +32,32 @@ final class _AdBannerSlotState extends State<AdBannerSlot> {
       return;
     }
     _requested = true;
-    // Inline banner capped to 50dp high so it always fits the reserved slot;
-    // the Yandex AdWidget resizes itself to the loaded ad's actual height.
-    final width = MediaQuery.of(context).size.width.truncate();
+    _loadBanner();
+  }
+
+  // Fixed 320x50 banner so it always fits the reserved slot with no layout
+  // shift; adaptive sizing can exceed the slot height on large screens.
+  void _loadBanner() {
     final banner = BannerAd(
-      adSize: BannerAdSize.inline(width: width, maxHeight: 50),
+      adUnitId: _kBannerAdUnitId,
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (_) {
+          if (mounted) {
+            setState(() => _loaded = true);
+          }
+        },
+        onAdFailedToLoad: (ad, error) => ad.dispose(),
+      ),
     );
-    banner.load(const AdRequest(adUnitId: _kBannerBlockId));
     _banner = banner;
+    banner.load();
   }
 
   @override
   void dispose() {
-    // Best-effort native teardown: destroy() can race the platform-view
-    // channel teardown and throw MissingPluginException once the native side
-    // is already gone. That error is non-actionable during disposal.
-    _banner?.destroy().catchError((Object _) {});
+    _banner?.dispose();
     super.dispose();
   }
 
@@ -55,9 +66,15 @@ final class _AdBannerSlotState extends State<AdBannerSlot> {
     final banner = _banner;
     return SizedBox(
       height: _kBannerSlotHeight,
-      child: banner == null
-          ? const SizedBox.shrink()
-          : Center(child: AdWidget(bannerAd: banner)),
+      child: (_loaded && banner != null)
+          ? Center(
+              child: SizedBox(
+                width: banner.size.width.toDouble(),
+                height: banner.size.height.toDouble(),
+                child: AdWidget(ad: banner),
+              ),
+            )
+          : const SizedBox.shrink(),
     );
   }
 }

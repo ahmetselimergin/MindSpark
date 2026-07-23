@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mind_spark/app/app.dart';
 import 'package:mind_spark/app/routes.dart';
+import 'package:mind_spark/core/ads/interstitial_ad_controller.dart';
 import 'package:mind_spark/core/theme/app_images.dart';
 import 'package:mind_spark/core/theme/app_theme.dart';
 import 'package:mind_spark/core/widgets/ad_banner_slot.dart';
@@ -71,6 +72,7 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    ref.read(interstitialAdControllerProvider); // preload the interstitial
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         ref.read(appProgressControllerProvider.notifier).reconcileLives();
@@ -109,6 +111,11 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen>
       return;
     }
     setState(() => _stuckFlashTick++);
+  }
+
+  void _goHome() {
+    ref.read(interstitialAdControllerProvider).maybeShowOnHome();
+    Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.home, (_) => false);
   }
 
   void _tick() {
@@ -151,6 +158,7 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen>
       _countdown = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
     } else {
       _navigated = true;
+      ref.read(interstitialAdControllerProvider).maybeShowOnHome();
       Navigator.of(
         context,
       ).pushNamedAndRemoveUntil(AppRoutes.home, (_) => false);
@@ -247,6 +255,7 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen>
       saving: _saving,
       stuckFlashTick: _stuckFlashTick,
       onRestart: game.restart,
+      onHome: _goHome,
       onRetry: _needsProgressReload ? _retryProgress : _retrySave,
     );
   }
@@ -366,6 +375,7 @@ final class _GameplayScreenState extends ConsumerState<GameplayScreen>
       return;
     }
     _navigated = true;
+    ref.read(interstitialAdControllerProvider).maybeShowOnLevelComplete();
     Navigator.of(context).pushReplacementNamed(
       AppRoutes.result,
       arguments: ResultRouteArgs(
@@ -388,6 +398,7 @@ final class _GameplayView extends StatelessWidget {
     required this.saving,
     required this.stuckFlashTick,
     required this.onRestart,
+    required this.onHome,
     required this.onRetry,
   });
 
@@ -400,6 +411,7 @@ final class _GameplayView extends StatelessWidget {
   final bool saving;
   final int stuckFlashTick;
   final VoidCallback onRestart;
+  final VoidCallback onHome;
   final VoidCallback onRetry;
 
   @override
@@ -472,11 +484,7 @@ final class _GameplayView extends StatelessWidget {
                                 semanticLabel: 'Home',
                                 width: 40,
                                 height: 40,
-                                onPressed: () => Navigator.of(context)
-                                    .pushNamedAndRemoveUntil(
-                                      AppRoutes.home,
-                                      (_) => false,
-                                    ),
+                                onPressed: onHome,
                               ),
                             ],
                           ),

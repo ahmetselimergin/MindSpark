@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yandex_mobileads/mobile_ads.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:mind_spark/app/app.dart';
 import 'package:mind_spark/core/widgets/ad_banner_slot.dart';
 import 'package:mind_spark/features/gameplay/gameplay_screen.dart';
